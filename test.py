@@ -1,24 +1,19 @@
 from app import *
+import pdb
 reset_db()
-katie = Player.query.filter_by(name = "Katie").one()
-team1 = Team()
-mary = Woman(name="Mary")
-team1.woman = mary
+for i in range(1, 6):
+    
+    p = Player.query.get(i)
 
-mary.activity_association.append(Participant_Activity_Association(episode = 1, activity = Activity.query.all()[0]))
-mary.activity_association.append(Participant_Activity_Association(episode = 1, activity = Activity.query.all()[0]))
-mary.activity_association.append(Participant_Activity_Association(episode = 2, activity = Activity.query.all()[2]))
-mary.activity_association.append(Participant_Activity_Association(episode = 2, activity = Activity.query.all()[20]))
-
-db.session.add(mary)
-joe = Man(name="Joe")
-db.session.add(joe)
-joe.activity_association.append(Participant_Activity_Association(episode = 1, activity = Activity.query.all()[1]))
-joe.activity_association.append(Participant_Activity_Association(episode = 1, activity = Activity.query.all()[0]))
-joe.activity_association.append(Participant_Activity_Association(episode = 1, activity = Activity.query.all()[0]))
-db.session.commit()
-
-katie.teams.append(team1)
-p = team1.woman
-y = p.activity_association
-print(calculate_participant_points(p, "good", 1))
+    for e in range(0, 3):
+        new_team = Team(episode = e + 1)
+        db.session.add(new_team)
+        # Men start at id 16, which is why I'm adding + 14 for men (it's not exactly right).
+        # I did some janky math to try to make sure everyone gets a different man/woman,
+        # but I did it wrong. However, I think the overlap here is actaully good because
+        # it will help me test when people draft the same man.
+        new_team.woman = Participant.query.get((i * 2) + e)
+        new_team.man   = Participant.query.get((i * 2) + e + 14)
+        new_team.bear  = Participant.query.get(random.randint(1, 30))
+        p.teams.append(new_team)
+        db.session.commit()

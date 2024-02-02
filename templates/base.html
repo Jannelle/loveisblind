@@ -1,68 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{% block title %} {% endblock %} - FlaskApp</title>
-    <style>
-        .title {
-            margin: 5px;
-        }
-
-        .content {
-            margin: 5px;
-            width: 100%;
-            display: flex;
-            flex-direction: row;
-            flex-wrap: wrap;
-        }
-
-        .player {
-            padding: 10px;
-            margin: 5px;
-            width: 20%;
-            background-color: #f3f3f3;
-            inline-size: 100%;
-        }
-
-        .team_name {
-            padding: 10px;
-            margin: 5px;
-            background-color: #ffffff;
-            color: #004835;
-        }
-
-        .name a {
-            color: #00a36f;
-            text-decoration: none;
-        }
-
-        nav a {
-            color: #d64161;
-            font-size: 3em;
-            margin-left: 50px;
-            text-decoration: none;
-        }
-
-        table, th, td {
-            border: 1px solid black;
-            padding: 30px;
-            border-collapse: collapse;
-        }
-
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}Your Website Title{% endblock %}</title>
         
-
+        <style>
+            body {
+                font-family: 'Arial', sans-serif;
+                background-color: #f4f4f4;
+                color: #333;
+                margin: 0;
+                padding: 0;
+            }
     
-    </style>
-</head>
+            header {
+                background-color: #4285f4;
+                color: #fff;
+                padding: 10px;
+                text-align: center;
+            }
+    
+            nav {
+                background-color: #333;
+                color: #fff;
+                padding: 10px;
+                text-align: center;
+            }
+    
+            nav a {
+                color: #fff;
+                text-decoration: none;
+                margin: 0 10px;
+            }
+    
+            nav a:hover {
+                text-decoration: underline;
+            }
+    
+            main {
+                padding: 20px;
+            }
+    
+            footer {
+                background-color: #333;
+                color: #fff;
+                padding: 10px;
+                text-align: center;
+                position: fixed;
+                bottom: 0;
+                width: 100%;
+            }
+
+            .data-square {
+                display: inline-block; /* Allows squares to be lined up horizontally */
+                width: 240px; /* Adjust the width as needed */
+                background-color: #f0f0f0;
+                border: 1px solid #ccc;
+                padding: 10px;
+                margin: 10px;
+                box-sizing: border-box; /* Includes padding and border in the width calculation */
+                font-size: 16px; /* Adjust the font size as needed */
+            }
+
+            .player-info {
+                text-align: center;
+                background-color: #ddd;
+                padding: 5px;
+                margin-bottom: 10px;
+                font-size: 14px; /* Adjust the font size as needed */
+            }
+
+            .episode-info {
+                background-color: #fff;
+                border: 1px solid #ddd;
+                padding: 5px;
+                margin-bottom: 5px;
+                font-size: 14px; /* Adjust the font size as needed */
+            }
+
+            table.specific-table tr td:first-child {
+                width: 450px;
+            }
+
+
+            table.specific-table th {
+                background-color: #f2f2f2;
+            }
+            /* Additional styling for better visual appeal */
+            h3, h4 {
+                margin-bottom: 5px;
+                margin-top: 5px;
+            }
+
+            p {
+                margin: 2px 0;
+            }
+
+            table, th, td {
+                border: 1px solid black;
+            }
+        </style>
+    </head>
+    
 <body>
+    <header>
+        <h1>Fantasy Love is Blind: Season 6</h1>
+    </header>
     <nav>
-        <a href="{{ url_for('index') }}">FlaskApp</a>
-        <a href="{{ url_for('participant_points') }}">participant_points</a>
-        <a href="#">About</a>
+        <a href="{{ url_for('index') }}">Current scores</a>
+        <a href="{{ url_for('castmembers') }}">Castmember scores</a>
+        <button id="resetButton">Reset</button>
+
     </nav>
     <hr>
     <div class="content">
         {% block content %} {% endblock %}
     </div>
+<script>
+    
+    document.addEventListener('DOMContentLoaded', function() {
+    var resetButton = document.getElementById('resetButton');
+
+    resetButton.addEventListener('click', function() {
+        // Make an AJAX request to the backend when the button is clicked
+        fetch('/reset_db', {
+            method: 'POST', // or 'GET' depending on your backend setup
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            // You can include data in the request body if needed
+            // body: JSON.stringify({ key: 'value' })
+        })
+
+    });
+});
+</script>    
 </body>
 </html>

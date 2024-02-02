@@ -11,9 +11,11 @@
             </tr>
             {% for participant in participants %}            
                 <TR background-color: #96D4D4;>
-                <TD class="c1">{{ participant.name }}</TD>
-                <TD class="c2">{{ calculate_participant_points(participant, "good") }}</TD>
-                <TD class="c3">{{ calculate_participant_points(participant, "bad") }}</TD>
+                <TD class="c1">{{ participant.id }}</TD>
+                <TD class="c2">{{ participant.name }}</TD>
+                <TD class="c2">{{ participant.gender }}</TD>
+                <TD class="c3">{{ calculate_participant_points(participant, "good") }}</TD>
+                <TD class="c4">{{ calculate_participant_points(participant, "bad") }}</TD>
                 </TR>
             {% endfor %}
         </table>

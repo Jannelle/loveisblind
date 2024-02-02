@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h1 class="title">{% block title %} Database view</h1>
+    <div class="content">
+        <table border: 1px solid white;>
+            {% for player in players %}            
+                <TR background-color: #96D4D4;>
+                <TD class="c1">{{ participant.name }}</TD>
+                <TD class="c2">{{ calculate_participant_points(participant, "good") }}</TD>
+                <TD class="c3">{{ calculate_participant_points(participant, "bad") }}</TD>
+                </TR>
+            {% endfor %}
+        </table>
+
+    </div>
+{% endblock %}

@@ -10,7 +10,7 @@
             <tr>
                 <td>
                     <h2>Men</h2>
-                    <select id="menList" size="15" style="width: 100px;">
+                    <select id="menList" size="15" style="width: 200px;">
                         {% for man in men %}
                             <option value="{{ man.name }}">{{ man.name }}</option>
                         {% endfor %}
@@ -18,7 +18,7 @@
                 </td>
                 <td>
                     <h2>Women</h2>
-                    <select id="womenList" size="15" style="width: 100px;">
+                    <select id="womenList" size="15" style="width: 200px;">
                         {% for woman in women %}
                             <option value="{{ woman.name }}">{{ woman.name }}</option>
                         {% endfor %}
@@ -26,7 +26,7 @@
                 </td>
                 <td>
                     <h2>Bad News Bears</h2>
-                    <select id="badNewsBearsList" size="15" style="width: 100px;">
+                    <select id="badNewsBearsList" size="15" style="width: 200px;">
                         {% for bear in participants %}
                             <option value="{{ bear.name }}">{{ bear.name }}</option>
                         {% endfor %}
@@ -36,14 +36,14 @@
         </table>
 
         <div>
-            <h2>Team Lists</h2>
+            <h2>Teams</h2>
             <table>
-                {% for team in teams %}
+                {% for player in players %}
                 <td>
-                    <h3>{{ team.owner.name }}</h3>
-                    <select class="teamList" size="5" style="width: 200px;" data-team="{{ team.owner.name }}"></select>
-                    <button class="teamButton" data-team="{{ team.owner.name }}">Add to {{ team.owner.name }}</button>
-                    <button class="removeButton" data-team="{{ team.owner.name }}">Remove from {{ team.owner.name }}</button>
+                    <h3>{{ player.name }}</h3>
+                    <select class="teamList" size="5" style="width: 200px;" data-team="{{ player.name }}"></select>
+                    <button class="teamButton" data-team="{{ player.name }}">Add to {{ player.name }}</button>
+                    <button class="removeButton" data-team="{{ player.name }}">Remove from {{ player.name }}</button>
                 </td>
             {% endfor %}
         </table>
@@ -51,10 +51,7 @@
     </div>
 
     <button id="saveButton">Save</button>
-
-    <div id="confirmationMessage" style="display: none; color: green;"></div>
-
-
+    <div id="confirmationMessage" style="display: none; color: green; display: inline-block;"/></div>
 
 
     <script>
@@ -74,17 +71,15 @@
                 for (var i = 0; i < 3; i++) {
                     participantList = participant_lists[i]
                     var selectedParticipant = participantList.value;
-                    if (selectedParticipant === "") {
-                        continue;
+                    
+                    if (selectedParticipant !== '' ) {
+                        role = participantList.id.replace('List', '');
+                        var option = document.createElement('option');
+                        option.text = selectedParticipant + ' - ' + role;
+                        option.value = option.text
+                        teamList.add(option);
                     }
-
-                    role = participantList.id.replace('List', '');
-                    var option = document.createElement('option');
-                    option.text = selectedParticipant + ' - ' + role;
-                    option.value = option.text
-                    console.warn(option.value)
-                    teamList.add(option);
-
+                    
                     // If it's not BadNewsBears, remove from the participant list
                     if (participantList !== badNewsBearsList) {
                         participantList.remove(participantList.selectedIndex);
@@ -92,8 +87,6 @@
                     participantList.selectedIndex = -1;
 
                 }
-
-                
             }
 
             for (var i = 0; i < teamButtons.length; i++) {
@@ -131,8 +124,7 @@
                     teamList.remove(teamList.selectedIndex);
                 });
             }
-        });
-        document.addEventListener('DOMContentLoaded', function () {
+
         // Your existing JavaScript code
 
         // Add an event listener to the "Save" button
@@ -143,19 +135,18 @@
 
         // Function to save the team lists
         function saveTeamLists() {
-            console.warn(episode)
-            console.warn("{{ episode }}")
-            var episode = "{{ episode }}"; // Include the episode variable from the Flask template
+            
+            
             var teamLists = document.getElementsByClassName('teamList');
+            console.log(teamLists)
             var teamsData = [];
 
             for (var i = 0; i < teamLists.length; i++) {
                 var teamName = teamLists[i].getAttribute('data-team');
                 var participants = Array.from(teamLists[i].options).map(option => option.value);
-                if participants.length > 0:
-                    teamsData.push({ name: teamName, participants: participants });
+                teamsData.push({name: teamName, 'participants': participants});
             }
-
+            
             // Include the "episode" variable in the JSON data
             var requestData = {
                 episode: episode,
@@ -193,11 +184,7 @@
             }, 3000); // Hide after 3 seconds
         }
 
-        // Add an event listener to the "Save" button
-        var saveButton = document.getElementById('saveButton');
-        saveButton.addEventListener('click', function () {
-            saveTeamLists();
-        });
+
     });
     </script>
 </body>
