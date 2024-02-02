@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<body>
+        <h2>Men</h2>
+    <select id="menList" size="5" style="width: 200px;">
+        {% for man in men %}
+            <option value="{{ man.name }}">{{ man.name }}</option>
+        {% endfor %}
+    </select>
+
+    <h2>Women</h2>
+    <select id="womenList" size="5" style="width: 200px;">
+        {% for woman in women %}
+            <option value="{{ woman.name }}">{{ woman.name }}</option>
+        {% endfor %}
+    </select>
+
+    <h2>Bad News Bears</h2>
+    <select id="badNewsBearsList" size="5" style="width: 200px;">
+        {% for bear in participants %}
+            <option value="{{ bear.name }}">{{ bear.name }}</option>
+        {% endfor %}
+    </select>
+
+
+<script>
+    // JavaScript code to handle participant selection and team assignment
+    document.addEventListener('DOMContentLoaded', function () {
+        // Get references to HTML elements
+        var participantList = document.getElementById('participantList');
+        var teamButtons = document.getElementsByClassName('teamButton');
+        var teamLists = document.getElementsByClassName('teamList');
+        var removeButtons = document.getElementsByClassName('removeButton');
+
+        // Event listeners for assigning participants to teams
+        for (var i = 0; i < teamButtons.length; i++) {
+            teamButtons[i].addEventListener('click', function () {
+                // Get selected participant and team name
+                var selectedParticipant = participantList.value;
+                var teamName = this.getAttribute('data-team');
+
+                // Get the corresponding team list
+                var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
+
+                // Create an option element and add it to the team list
+                var option = document.createElement('option');
+                option.text = selectedParticipant;
+                option.value = selectedParticipant;
+                teamList.add(option);
+
+                // Remove the participant from the main participant list
+                participantList.remove(participantList.selectedIndex);
+            });
+        }
+
+        // Event listeners for removing participants from teams
+        for (var i = 0; i < removeButtons.length; i++) {
+            removeButtons[i].addEventListener('click', function () {
+                // Get team name and team list
+                var teamName = this.getAttribute('data-team');
+                var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
+
+                // Get selected participant from the team list
+                var selectedParticipant = teamList.value;
+
+                // Create an option element and add it to the main participant list
+                var option = document.createElement('option');
+                option.text = selectedParticipant;
+                option.value = selectedParticipant;
+                participantList.add(option);
+
+                // Remove the participant from the team list
+                teamList.remove(teamList.selectedIndex);
+            });
+        }
+    });
+</script>
+</body>
+{% endblock %}

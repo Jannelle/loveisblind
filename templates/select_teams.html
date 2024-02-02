@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<body>
+    {% block title %}
+    Selecting Teams for Episode {{ episode }}
+    {% endblock %}
+    <div>
+        <table style="border-spacing: 50 0px;">
+            <tr>
+                <td>
+                    <h2>Men</h2>
+                    <select id="menList" size="15" style="width: 100px;">
+                        {% for man in men %}
+                            <option value="{{ man.name }}">{{ man.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <h2>Women</h2>
+                    <select id="womenList" size="15" style="width: 100px;">
+                        {% for woman in women %}
+                            <option value="{{ woman.name }}">{{ woman.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <h2>Bad News Bears</h2>
+                    <select id="badNewsBearsList" size="15" style="width: 100px;">
+                        {% for bear in participants %}
+                            <option value="{{ bear.name }}">{{ bear.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+            </tr>
+        </table>
+
+        <div>
+            <h2>Team Lists</h2>
+            <table>
+                {% for team in teams %}
+                <td>
+                    <h3>{{ team.owner.name }}</h3>
+                    <select class="teamList" size="5" style="width: 200px;" data-team="{{ team.owner.name }}"></select>
+                    <button class="teamButton" data-team="{{ team.owner.name }}">Add to {{ team.owner.name }}</button>
+                    <button class="removeButton" data-team="{{ team.owner.name }}">Remove from {{ team.owner.name }}</button>
+                </td>
+            {% endfor %}
+        </table>
+        </div>
+    </div>
+
+    <button id="saveButton">Save</button>
+
+    <div id="confirmationMessage" style="display: none; color: green;"></div>
+
+
+
+
+    <script>
+        // JavaScript code to handle participant selection and team assignment
+        document.addEventListener('DOMContentLoaded', function () {
+            var menList = document.getElementById('menList');
+            var womenList = document.getElementById('womenList');
+            var badNewsBearsList = document.getElementById('badNewsBearsList');
+            var participant_lists = [menList, womenList, badNewsBearsList]
+            var teamButtons = document.getElementsByClassName('teamButton');
+            var teamLists = document.getElementsByClassName('teamList');
+            var removeButtons = document.getElementsByClassName('removeButton');
+
+            function assignToTeam(teamName) {
+                var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
+
+                for (var i = 0; i < 3; i++) {
+                    participantList = participant_lists[i]
+                    var selectedParticipant = participantList.value;
+                    if (selectedParticipant === "") {
+                        continue;
+                    }
+
+                    role = participantList.id.replace('List', '');
+                    var option = document.createElement('option');
+                    option.text = selectedParticipant + ' - ' + role;
+                    option.value = option.text
+                    console.warn(option.value)
+                    teamList.add(option);
+
+                    // If it's not BadNewsBears, remove from the participant list
+                    if (participantList !== badNewsBearsList) {
+                        participantList.remove(participantList.selectedIndex);
+                    }
+                    participantList.selectedIndex = -1;
+
+                }
+
+                
+            }
+
+            for (var i = 0; i < teamButtons.length; i++) {
+                teamButtons[i].addEventListener('click', function () {
+                    var teamName = this.getAttribute('data-team')
+                    assignToTeam(teamName)
+                });
+            }
+
+            for (var i = 0; i < removeButtons.length; i++) {
+                removeButtons[i].addEventListener('click', function () {
+                    var teamName = this.getAttribute('data-team');
+                    var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
+                    var origValue = teamList.value;
+                    var option = document.createElement('option');
+                    
+                    if (origValue.includes('badNewsBears')) {
+                        oldList = 'badNewsBearsList';
+                    } else if (origValue.includes('women')) {
+                        oldList = 'womenList';
+                    } else if (origValue.includes('men')) {
+                        oldList = 'menList';
+                    }
+                    selectedParticipant = origValue.replace(oldList, '');
+                    option.value = selectedParticipant;
+                    option.text = selectedParticipant;
+                    // Add participant back to the corresponding participant list
+                    if (oldList === "menList") {
+                        menList.add(option);
+                    } else if (oldList === "womenList") {
+                        womenList.add(option);
+                    }
+
+                    // Remove participant from the team list
+                    teamList.remove(teamList.selectedIndex);
+                });
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+        // Your existing JavaScript code
+
+        // Add an event listener to the "Save" button
+        var saveButton = document.getElementById('saveButton');
+        saveButton.addEventListener('click', function () {
+            saveTeamLists();
+        });
+
+        // Function to save the team lists
+        function saveTeamLists() {
+            console.warn(episode)
+            console.warn("{{ episode }}")
+            var episode = "{{ episode }}"; // Include the episode variable from the Flask template
+            var teamLists = document.getElementsByClassName('teamList');
+            var teamsData = [];
+
+            for (var i = 0; i < teamLists.length; i++) {
+                var teamName = teamLists[i].getAttribute('data-team');
+                var participants = Array.from(teamLists[i].options).map(option => option.value);
+                if participants.length > 0:
+                    teamsData.push({ name: teamName, participants: participants });
+            }
+
+            // Include the "episode" variable in the JSON data
+            var requestData = {
+                episode: episode,
+                teams: teamsData
+            };
+
+            // Send the data to the backend using AJAX
+            fetch('/save_teams', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                showConfirmationMessage('Data saved successfully!');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                showConfirmationMessage('Error saving data. Please try again.');
+            });
+        }
+
+        function showConfirmationMessage(message) {
+            // Display the confirmation message (you can customize this part)
+            var confirmationDiv = document.getElementById('confirmationMessage');
+            confirmationDiv.textContent = message;
+            confirmationDiv.style.display = 'block';
+
+            // Hide the message after a few seconds (you can adjust the timeout)
+            setTimeout(function () {
+                confirmationDiv.style.display = 'none';
+            }, 3000); // Hide after 3 seconds
+        }
+
+        // Add an event listener to the "Save" button
+        var saveButton = document.getElementById('saveButton');
+        saveButton.addEventListener('click', function () {
+            saveTeamLists();
+        });
+    });
+    </script>
+</body>
+{% endblock %}
