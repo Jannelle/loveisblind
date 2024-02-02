@@ -1,71 +1,98 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Score Episode
+    Score Episode {{ episode }}
 {% endblock %}
-{% block content %}
 <body>
+{% block content %}
+
     <title>Episode {{ episode }}</title>
-    <h3>Men</h3>
-    <table class="specific-table">
-        <tr>
-            <th></th>
+    <table class="styled-table">
+        <thead>
+            <th colspan = "{{ men | length + 1}}" style="text-align: center; background-color: darkblue; color: white;">Men</th> 
+        </thead>
+        <thead>
+            <th class="styled-table"></th>
             {% for man in men %}  <th>{{ man.name }}</th>  {% endfor %}
-        </tr>
-        {% for activity in get_activities %}
+        </thead>
+        {% for activity in activities %}
+        {% if activity.type == 'good' %}
             <tr>
-                <td>{{ activity.name }}</td>
+                <td>
+                    {{ activity.name }}
+                </td>
                 {% for man in men %}
-                    <td>
-                        <button class="update-button" data-man="{{ man.id }}" data-activity="{{ activity.id }}">
-                        <span class="activity-count">0</span>
-                        </button>
-                        
-                    </td>
+                <td>
+                    <button class="update-button" data-man="{{ man.id }}" data-activity="{{ activity.id }}">
+                    <span class="activity-count">{{ man.activity_association.filter_by(episode = episode, activity = activity).all() | length }}</span>
+                    </button>
+                    <button class="minus-button" data-man="{{ man.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;"
+                    >
+                    -
+                    </button>
+                </td>
                 {% endfor %}
             </tr>
+        {% endif %}
         {% endfor %}
+        
     </table>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var updateButtons = document.querySelectorAll('.update-button');
+        var updateButtons = document.querySelectorAll('.update-button');
+        var minusButtons  = document.querySelectorAll('.minus-button' );
 
-            updateButtons.forEach(function(button) {
-                button.addEventListener('click', function() {
-                    var man_id = this.getAttribute('data-man');
-                    var activity_id = this.getAttribute('data-activity');
-                    var episode = "{{ episode }}"; // Include the episode variable from the Flask template
-                    console.log(man_id)
-                    console.log(activity_id)
-                    // Send the update to the backend
-                    fetch('/increment_activity', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            participant_id: man_id,
-                            activity_id: activity_id,
-                            episode: episode
-                        }),
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        // Handle the response if needed
-                        console.log('Update successful:', data);
-                        // Update the count in the corresponding span
+        // Function to handle button clicks (both increment and decrement)
+        function handleButtonClick(button, increment) {
+            var man_id = button.getAttribute('data-man');
+            var activity_id = button.getAttribute('data-activity');
+            var episode = "{{ episode }}"; // Include the episode variable from the Flask template
 
-                        var countSpan = this.querySelector('.activity-count');
-                        countSpan.innerText = parseInt(countSpan.innerText) + 1;
-                    })
-                    .catch((error) => {
-                        console.error('Error updating activity:', error);
-                    })
-                    ;
-                });
+            // Send the update to the backend
+            fetch('/increment_activity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    participant_id: man_id,
+                    activity_id: activity_id,
+                    episode: episode,
+                    increment: increment // Send whether it's an increment or decrement
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response if needed
+                console.log('Update successful:', data);
+                // Update the count in the corresponding span
+                var countSpan = button.parentElement.querySelector('.activity-count');
+                console.log(increment)
+                if (increment || parseInt(countSpan.innerText) > 0) {
+                    countSpan.innerText = parseInt(countSpan.innerText) + (increment ? 1 : -1);
+                }
+            })
+            .catch((error) => {
+                console.error('Error updating activity:', error);
+            });
+        }
+
+        // Event listener for increment buttons
+        updateButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                handleButtonClick(this, true); // Increment the count
             });
         });
+
+        // Event listener for decrement buttons
+        minusButtons.forEach(function(button) {
+            button.addEventListener('click', function() {
+                handleButtonClick(this, false); // Decrement the count
+            });
+        });
+    });
+
     </script>
+    {% endblock %}
 </body>
-{% endblock %}

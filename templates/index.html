@@ -17,8 +17,8 @@
         <p><b>Man:</b> {{ team.man.name }} </p>
         {% if team.man is not none %}
         {% for activity in team.man.get_activities(team.episode) %}
-        <p>{{activity.name}}</p>
-        {% endfor %}
+        <p>{{activity   .name}}</p>
+        {% endfor %}    
         {% endif %}
         
         <p><b>Woman:</b> {{ team.woman.name }}</p>

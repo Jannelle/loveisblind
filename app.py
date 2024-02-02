@@ -8,6 +8,7 @@ from sqlalchemy.sql import func
 import pandas as pd
 
 import random
+import pdb
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -104,7 +105,7 @@ class Activity(db.Model):
     id (int)   : Primary key
     name (str) : The text description of the activity
     pts (int)  : How many points that activity is worth
-    activity_type (str) ["good", "bad"] : 
+    type (str) ["good", "bad"] : 
         The type of activity it is. Bad News Bears will only get points for "bad" activities; others will get
         points for "good" activities.
     participants (AppenderQuery) : Collection of participants that have done the activity
@@ -113,7 +114,7 @@ class Activity(db.Model):
     id            = db.Column(db.Integer, primary_key = True)
     name          = db.Column(db.String(100), unique = False, nullable = False)
     pts           = db.Column(db.Integer,     unique = False, nullable = False)
-    activity_type = db.Column(db.String(100), unique = False, nullable = False)
+    type          = db.Column(db.String(100), unique = False, nullable = False)
     participant_association  = db.relationship('Participant_Activity_Association', back_populates = 'activity')
 
 
@@ -131,10 +132,6 @@ class Player(db.Model):
         return f'<Player {self.name}>'
     
 
-
-
-
-
 def populate_players():
     players = [
         Player(name = "Katie"),
@@ -150,33 +147,33 @@ def populate_players():
 
 def populate_activities():
     activities = [
-        Activity(name = "Said “I do” on their wedding day",                      pts = 8,   activity_type = "good"),
-        Activity(name = "Partner said “I do” on their wedding day",              pts = 7,   activity_type = "good"),
-        Activity(name = "Proposed or got proposed to",                           pts = 5,   activity_type = "good"),
-        Activity(name = "Got engaged (i.e., the proposal was accepted)",         pts = 5,   activity_type = "good"),
-        Activity(name = "Maturely resolved a conflict with another cast member", pts = 2,   activity_type = "good"),
-        Activity(name = "Did a sweet/romantic gesture for their partner",        pts = 1,   activity_type = "good"),
-        Activity(name = "Had a romantic, drama-free data",                       pts = 1,   activity_type = "good"),
-        Activity(name = "Happy cried",                                           pts = 1,   activity_type = "good"),
-        Activity(name = "Got called someone’s #1 choice",                        pts = 1,   activity_type = "good"),
-        Activity(name = "Said “I love you” to date/partner or vice versa",       pts = 1,   activity_type = "good"),
-        Activity(name = "Had sex with their partner",                            pts = 1,   activity_type = "good"),
-        Activity(name = "Got their partner’s friends/family’s blessing",         pts = 1,   activity_type = "good"),
-        Activity(name = "Got/received a gift",                                   pts = 1,   activity_type = "good"),
-        Activity(name = "Another contestant says they’re attracted to them",     pts = 0.5, activity_type = "good"),
+        Activity(name = "Said “I do” on their wedding day",                      pts = 8,   type = "good"),
+        Activity(name = "Partner said “I do” on their wedding day",              pts = 7,   type = "good"),
+        Activity(name = "Proposed or got proposed to",                           pts = 5,   type = "good"),
+        Activity(name = "Got engaged (i.e., the proposal was accepted)",         pts = 5,   type = "good"),
+        Activity(name = "Maturely resolved a conflict with another cast member", pts = 2,   type = "good"),
+        Activity(name = "Did a sweet/romantic gesture for their partner",        pts = 1,   type = "good"),
+        Activity(name = "Had a romantic, drama-free data",                       pts = 1,   type = "good"),
+        Activity(name = "Happy cried",                                           pts = 1,   type = "good"),
+        Activity(name = "Got called someone’s #1 choice",                        pts = 1,   type = "good"),
+        Activity(name = "Said “I love you” to date/partner or vice versa",       pts = 1,   type = "good"),
+        Activity(name = "Had sex with their partner",                            pts = 1,   type = "good"),
+        Activity(name = "Got their partner’s friends/family’s blessing",         pts = 1,   type = "good"),
+        Activity(name = "Got/received a gift",                                   pts = 1,   type = "good"),
+        Activity(name = "Another contestant says they’re attracted to them",     pts = 0.5, type = "good"),
 
-        Activity(name = "Says no on their wedding day",                                     pts = 10, activity_type = "bad"),
-        Activity(name = "Gets dumped on their wedding day",                                 pts = 7,  activity_type = "bad"),
-        Activity(name = "Cheats on their partner",                                          pts = 5,  activity_type = "bad"),
-        Activity(name = "Breaks up with partner (post engagement)",                         pts = 5,  activity_type = "bad"),
-        Activity(name = "In the pods, gets dumped by or dumps someone else",                pts = 2,  activity_type = "bad"),
-        Activity(name = "Gets their proposal rejected or rejects a proposal",               pts = 2,  activity_type = "bad"),
-        Activity(name = "Talks shit about someone else or gets talked shit about",          pts = 1,  activity_type = "bad"),
-        Activity(name = "After being engaged, flirts with someone who isn’t their partner", pts = 1,  activity_type = "bad"),
-        Activity(name = "Can't choose between two (or more) people",                        pts = 1,  activity_type = "bad"),
-        Activity(name = "Sad/angry cries",                                                  pts = 1,  activity_type = "bad"),
-        Activity(name = "Gets upset and walks out during a date without saying bye",        pts = 1,  activity_type = "bad"),
-        Activity(name = "Yells at/insults their partner",                                   pts = 1,  activity_type = "bad"),
+        Activity(name = "Says no on their wedding day",                                     pts = 10, type = "bad"),
+        Activity(name = "Gets dumped on their wedding day",                                 pts = 7,  type = "bad"),
+        Activity(name = "Cheats on their partner",                                          pts = 5,  type = "bad"),
+        Activity(name = "Breaks up with partner (post engagement)",                         pts = 5,  type = "bad"),
+        Activity(name = "In the pods, gets dumped by or dumps someone else",                pts = 2,  type = "bad"),
+        Activity(name = "Gets their proposal rejected or rejects a proposal",               pts = 2,  type = "bad"),
+        Activity(name = "Talks shit about someone else or gets talked shit about",          pts = 1,  type = "bad"),
+        Activity(name = "After being engaged, flirts with someone who isn’t their partner", pts = 1,  type = "bad"),
+        Activity(name = "Can't choose between two (or more) people",                        pts = 1,  type = "bad"),
+        Activity(name = "Sad/angry cries",                                                  pts = 1,  type = "bad"),
+        Activity(name = "Gets upset and walks out during a date without saying bye",        pts = 1,  type = "bad"),
+        Activity(name = "Yells at/insults their partner",                                   pts = 1,  type = "bad"),
     ]
 
     for activity in activities:
@@ -245,8 +242,27 @@ def reset_db():
     populate_players()
     populate_activities()
     populate_participants()
+    fake_data()
     db.session.commit()
-    return jsonify({"message": "Database reset saved successfully"})
+    return redirect(url_for('index'))
+
+def fake_data():
+    for i in range(1, 6):
+        
+        p = Player.query.get(i)
+
+        for e in range(0, 3):
+            new_team = Team(episode = e + 1)
+            db.session.add(new_team)
+            # Men start at id 16, which is why I'm adding + 14 for men (it's not exactly right).
+            # I did some janky math to try to make sure everyone gets a different man/woman,
+            # but I did it wrong. However, I think the overlap here is actaully good because
+            # it will help me test when people draft the same man.
+            new_team.woman = Participant.query.get((i * 2) + e)
+            new_team.man   = Participant.query.get((i * 2) + e + 14)
+            new_team.bear  = Participant.query.get(random.randint(1, 30))
+            p.teams.append(new_team)
+            db.session.commit()
 
 @app.route('/castmembers.html')
 def castmembers():
@@ -267,17 +283,17 @@ def create():
     return render_template('create.html')
 
 @app.template_global()
-def calculate_participant_points(participant, activity_type, episode = None):
+def calculate_participant_points(participant, type, episode = None):
         '''Calculates how many points a participant has earned.
 
         Args:
             participant (Participant) : The participant whose points we are evaluating.
-            activity_type (str) ["good", "bad"]: Will be used to filter which activities will give that participant points.
+            type (str) ["good", "bad"]: Will be used to filter which activities will give that participant points.
         '''
         total_pts = 0
         activity_assocs_to_search = participant.activity_association.filter_by(episode = episode)
         for activity_association in activity_assocs_to_search:
-            if activity_association.activity.activity_type == activity_type:
+            if activity_association.activity.type == type:
                 total_pts += activity_association.activity.pts
 
         return total_pts
@@ -298,20 +314,22 @@ def calculate_team_points(team):
 
     return total_points
 
-# @app.route('/score_episode/<int:episode>')
-# def score_episode(episode):
-#     activities = Activity   .query.all()
-#     men        = Man        .query.filter(Man        .team_id   != None).all()
-#     women      = Woman      .query.filter(Woman      .team_id   != None).all()
-#     bears       = Participant.query.filter(Participant.bear_teams != None).all()
+@app.route('/score_episode/<int:episode>')
+def score_episode(episode):
+    activities              = Activity.query.all()
+    participants_in_episode = Participant.query.join(Team, (Team.man_id == Participant.id) & (Team.episode == episode))
+    men   = participants_in_episode.filter(Participant.gender == "male").all()
+    women = participants_in_episode.filter(Participant.gender == "female").all()
+    bears = participants_in_episode.filter(Team.bear_id       == Participant.id).all()
 
-#     return render_template('score_episode.html'
-#                            , episode    = episode
-#                            , men        = men
-#                            , women      = women
-#                            , bears       = bears
-#                            , activities = activities
-#                            )
+    
+    return render_template('score_episode.html'
+                           , episode    = episode
+                           , men        = men
+                           , women      = women
+                           , bears      = bears
+                           , activities = activities
+                           )
 
 @app.route('/select_teams/<int:episode>')
 def select_teams(episode):
@@ -367,15 +385,24 @@ def increment_activity():
     participant_id = data.get('participant_id')
     activity_id    = data.get('activity_id')
     episode        = data.get('episode')
+    increment      = data.get('increment')
 
     participant = Participant.query.get(participant_id)
     activity    = Activity.query.get(activity_id)
     
-    participant.activity_association.append(
-        Participant_Activity_Association(episode = episode, activity = activity)
-    )
-    db.session.commit()
+    if increment:
+        participant.activity_association.append(
+            Participant_Activity_Association(episode = episode, activity = activity)
+        )
+    else:
+        assoc_to_remove = Participant_Activity_Association.query.filter_by(participant = participant
+                                                                         , episode   = episode
+                                                                         , activity  = activity
+                                                                         ).first()
+        if assoc_to_remove is not None:
+            participant.activity_association.remove(assoc_to_remove)
 
+    db.session.commit()
     return jsonify({"message": "Updated activities"})
 
 
@@ -393,6 +420,4 @@ def read_db():
                 if participant:
                     print(participant.name)
 
-if __name__ == '__main__':
-    app.run(debug=True)
 
