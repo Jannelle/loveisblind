@@ -63,7 +63,7 @@
                 text-align: center;
                 background-color: #ddd;
                 padding: 5px;
-                margin-bottom: 10px;
+                margin-bottom: 5px;
                 font-size: 14px; /* Adjust the font size as needed */
             }
 
@@ -113,6 +113,11 @@
                 color: #009879;
             }
 
+            p {
+                margin-bottom: 5px;
+                margin-top: 5px;
+            }
+
 
 
             
@@ -127,30 +132,79 @@
         <a href="{{ url_for('index') }}">Current scores</a>
         <a href="{{ url_for('castmembers') }}">Castmember scores</a>
         <button id="resetButton">Reset</button>
+        <form method="get" id="episodeForm">
+            <label for="episodeSelect">Score episode:</label>
+            <select id="episodeSelect" name="episode" onchange="updateAction()">
+                {% for episode_number in range(1, 13) %}
+                    <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
+                {% endfor %}
+            </select>
+        </form>
+        <form method="get" id="createTeamForm">
+            <label for="createTeamSelect">Create team:</label>
+            <select id="createTeamSelect" name="createTeam" onchange="updateActionCreateTeam()">
+                {% for episode_number in range(1, 13) %}
+                    <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
+                {% endfor %}
+            </select>
+        </form>
 
     </nav>
+    <script>
+        function updateAction() {
+            var selectedEpisode = document.getElementById("episodeSelect").value;
+            var dropdown = document.getElementById("episodeSelect");
+            window.location.href = "/score_episode/" + selectedEpisode
+            dropdown.selectedIndex = selectedEpisode - 1
+            
+        }
+
+        function updateActionCreateTeam() {
+            var selectedEpisode = document.getElementById("createTeamSelect").value;
+            var dropdown = document.getElementById("createTeamSelect");
+            window.location.href = "/select_teams/" + selectedEpisode
+            dropdown.selectedIndex = selectedEpisode - 1
+            
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            var resetButton = document.getElementById('resetButton');
+
+            resetButton.addEventListener('click', function() {
+                // Make an AJAX request to the backend when the button is clicked
+                fetch('/reset_db', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                });
+
+            });
+
+            // Retrieve the selected episode from the URL
+        var new_url         = window.location.pathname.split('/')
+        var new_url_episode = new_url.pop()
+        var new_url_link    = new_url.pop()
+        // Set the selected episode in the dropdown if it exists
+        console.log(new_url_episode)
+        console.log(new_url_link)
+        if (new_url_episode) {
+            if (new_url_link == 'score_episode') {
+                episodeSelect.value    = new_url_episode;
+                createTeamSelect.value = '';
+            }
+            if (new_url_link == 'select_teams') {
+                createTeamSelect.value = new_url_episode;
+                episodeSelect.value    = '';
+            }
+            
+        }
+        });
+    </script>
     <hr>
     <div class="content">
         {% block content %} {% endblock %}
     </div>
-<script>
     
-    document.addEventListener('DOMContentLoaded', function() {
-    var resetButton = document.getElementById('resetButton');
-
-    resetButton.addEventListener('click', function() {
-        // Make an AJAX request to the backend when the button is clicked
-        fetch('/reset_db', {
-            method: 'POST', // or 'GET' depending on your backend setup
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            // You can include data in the request body if needed
-            // body: JSON.stringify({ key: 'value' })
-        })
-
-    });
-});
-</script>    
 </body>
 </html>

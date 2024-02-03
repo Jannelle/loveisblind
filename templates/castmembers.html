@@ -1,13 +1,16 @@
 {% extends 'base.html' %}
 
 {% block content %}
-    <h1 class="title">{% block title %} Participants {% endblock %}</h1>
-    <div class="content">
-        <table border: 1px solid white;>
-            <tr>
-                <th>Participant</th>
-                <th>Good points</th>
-                <th>Bad News Bear points</th>
+<h1 class="title">{% block title %} Total Scores by Cast member {% endblock %}</h1>
+        <table class="styled-table">
+            <tr class="styled-table">
+                <thead>
+                    <th></th>
+                    <th>Participant</th>
+                    <th>Gender</th>
+                    <th>Good points</th>
+                    <th>Bad News Bear points</th>
+                </thead>
             </tr>
             {% for participant in participants %}            
                 <TR background-color: #96D4D4;>
@@ -20,5 +23,4 @@
             {% endfor %}
         </table>
 
-    </div>
 {% endblock %}

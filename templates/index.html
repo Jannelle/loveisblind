@@ -8,21 +8,15 @@
 {% for player in players %}
 <div class="data-square">
     <div class="player-info">
-        <h3>{{ player.name }} {{ player.id}} </h3>
-        <p>Total Score: 100</p>
+        <h3>{{ player.name }}</h3>
+        <p>Total Score: {{ calculate_player_points(player) }}</p>
     </div>
     {% for team in player.teams.all() %}
     <div class="episode-info">
-        <h4>Episode {{ team.episode }}</h4>
-        <p><b>Man:</b> {{ team.man.name }} </p>
-        {% if team.man is not none %}
-        {% for activity in team.man.get_activities(team.episode) %}
-        <p>{{activity   .name}}</p>
-        {% endfor %}    
-        {% endif %}
-        
-        <p><b>Woman:</b> {{ team.woman.name }}</p>
-        <p><b>Bad news bear:</b> {{ team.bear.name }}</p>
+        <p><b>Episode {{ team.episode }}</b></p>
+        <p><b>Man:</b> {{ team.man.name }} <b>({{calculate_participant_points(team.man, 'good', team.episode)}})</b></p>
+        <p><b>Woman:</b> {{ team.woman.name }} <b>({{calculate_participant_points(team.woman, 'good', team.episode)}})</b></p></p>
+        <p><b>Bad news bear:</b> {{ team.bear.name }} <b>({{calculate_participant_points(team.bear, 'bad', team.episode)}})</b></p></p>
     </div>
     {% endfor %}
 </div>        

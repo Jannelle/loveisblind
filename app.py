@@ -227,7 +227,7 @@ def __repr__(self):
     return f'<Player {self.name}>'    
     
 # ...
-@app.route('/')
+@app.route('/', methods = ('GET', 'POST'))
 def index():
     players = Player.query.all()
     return render_template('index.html', players = players)
@@ -242,8 +242,9 @@ def reset_db():
     populate_players()
     populate_activities()
     populate_participants()
-    fake_data()
+    # fake_data()
     db.session.commit()
+    
     return redirect(url_for('index'))
 
 def fake_data():
@@ -289,14 +290,21 @@ def calculate_participant_points(participant, type, episode = None):
         Args:
             participant (Participant) : The participant whose points we are evaluating.
             type (str) ["good", "bad"]: Will be used to filter which activities will give that participant points.
+            episode                   : Which episode to calculate points for. If None, will get total.
         '''
         total_pts = 0
-        activity_assocs_to_search = participant.activity_association.filter_by(episode = episode)
+        if participant is None:
+            return 0
+        if episode is None:
+            activity_assocs_to_search = participant.activity_association.all()
+        else:
+            activity_assocs_to_search = participant.activity_association.filter_by(episode = episode)
         for activity_association in activity_assocs_to_search:
             if activity_association.activity.type == type:
                 total_pts += activity_association.activity.pts
-
         return total_pts
+
+
 
 # This decorator allows us to use this function in a template
 @app.template_global()
@@ -314,20 +322,29 @@ def calculate_team_points(team):
 
     return total_points
 
+@app.template_global()
+def calculate_player_points(player):
+    '''Calculates how many points a player has by looping through all of their teams.'''
+    total_points = 0
+    for team in player.teams.all():
+        total_points += calculate_team_points(team)
+    return total_points
+
 @app.route('/score_episode/<int:episode>')
 def score_episode(episode):
     activities              = Activity.query.all()
-    participants_in_episode = Participant.query.join(Team, (Team.man_id == Participant.id) & (Team.episode == episode))
-    men   = participants_in_episode.filter(Participant.gender == "male").all()
-    women = participants_in_episode.filter(Participant.gender == "female").all()
-    bears = participants_in_episode.filter(Team.bear_id       == Participant.id).all()
-
+    men   = Participant.query.join(Team, (Team.man_id   == Participant.id) & (Team.episode == episode))
+    women = Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode))
+    bears = Participant.query.join(Team, (Team.bear_id  == Participant.id) & (Team.episode == episode))
+    roles_dict   = {
+        'Men'            : men,
+        'Women'          : women,
+        'Bad News Bears' : bears,
+    }
     
     return render_template('score_episode.html'
                            , episode    = episode
-                           , men        = men
-                           , women      = women
-                           , bears      = bears
+                           , roles_dict = roles_dict
                            , activities = activities
                            )
 
@@ -349,6 +366,7 @@ def select_teams(episode):
 
 @app.route('/save_teams', methods = ('GET', 'POST'))
 def save_teams():
+    print('check')
     data = request.get_json()
     episode = data.get('episode')
     teams_to_parse = data.get('teams')

@@ -7,26 +7,30 @@
 {% block content %}
 
     <title>Episode {{ episode }}</title>
+    {% for label, group in roles_dict.items() %}
+
     <table class="styled-table">
         <thead>
-            <th colspan = "{{ men | length + 1}}" style="text-align: center; background-color: darkblue; color: white;">Men</th> 
+            <th colspan = "{{ group.all() | length + 1}}" style="text-align: center; background-color: darkblue; color: white;">{{ label }}</th> 
         </thead>
         <thead>
             <th class="styled-table"></th>
-            {% for man in men %}  <th>{{ man.name }}</th>  {% endfor %}
+            {% for participant in group %}  <th>{{ participant.name }}</th>  {% endfor %}
         </thead>
         {% for activity in activities %}
-        {% if activity.type == 'good' %}
+        {% if ( label in ["Men", "Women"] ) and ( activity.type == "good" )
+           or ( label == "Bad News Bears" ) and ( activity.type == "bad" )
+        %}
             <tr>
                 <td>
                     {{ activity.name }}
                 </td>
-                {% for man in men %}
+                {% for participant in group %}
                 <td>
-                    <button class="update-button" data-man="{{ man.id }}" data-activity="{{ activity.id }}">
-                    <span class="activity-count">{{ man.activity_association.filter_by(episode = episode, activity = activity).all() | length }}</span>
+                    <button class="update-button" data-participant="{{ participant.id }}" data-activity="{{ activity.id }}">
+                    <span class="activity-count">{{ participant.activity_association.filter_by(episode = episode, activity = activity).all() | length }}</span>
                     </button>
-                    <button class="minus-button" data-man="{{ man.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;"
+                    <button class="minus-button" data-participant="{{ participant.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;"
                     >
                     -
                     </button>
@@ -37,6 +41,7 @@
         {% endfor %}
         
     </table>
+    {% endfor %}
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -45,7 +50,7 @@
 
         // Function to handle button clicks (both increment and decrement)
         function handleButtonClick(button, increment) {
-            var man_id = button.getAttribute('data-man');
+            var participant_id = button.getAttribute('data-participant');
             var activity_id = button.getAttribute('data-activity');
             var episode = "{{ episode }}"; // Include the episode variable from the Flask template
 
@@ -56,7 +61,7 @@
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    participant_id: man_id,
+                    participant_id: participant_id,
                     activity_id: activity_id,
                     episode: episode,
                     increment: increment // Send whether it's an increment or decrement
