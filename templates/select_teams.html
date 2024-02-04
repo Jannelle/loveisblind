@@ -34,6 +34,8 @@
                 </td>
             </tr>
         </table>
+        <div id="confirmationMessage" style="display: none; color: green; display: inline-block;"/></div>
+        <div id="errorMessage" style="display: none; color: red;"></div>
 
         <div>
             <h2>Teams</h2>
@@ -51,117 +53,144 @@
     </div>
 
     <button id="saveButton">Save</button>
-    <div id="confirmationMessage" style="display: none; color: green; display: inline-block;"/></div>
+    
 
 
-    <script>
+<script>
+        
         // JavaScript code to handle participant selection and team assignment
-        var episode = "{{ episode }}"; // Include the episode variable from the Flask template
-        document.addEventListener('DOMContentLoaded', function () {
-            var menList = document.getElementById('menList');
-            var womenList = document.getElementById('womenList');
-            var badNewsBearsList = document.getElementById('badNewsBearsList');
-            var participant_lists = [menList, womenList, badNewsBearsList]
-            var teamButtons = document.getElementsByClassName('teamButton');
-            var teamLists = document.getElementsByClassName('teamList');
-            var removeButtons = document.getElementsByClassName('removeButton');
+var episode = "{{ episode }}"; // Include the episode variable from the Flask template
 
-            function assignToTeam(teamName) {
-                var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
+// Function to validate each team
+function validateTeam(participants, teamName) {
+    // Validate that there is exactly one man, one woman, and one bad news bear
+    var manCount = participants.filter(participant => participant.includes('men')).length;
+    var womanCount = participants.filter(participant => participant.includes('women')).length;
+    var bearCount = participants.filter(participant => participant.includes('badNewsBears')).length;
 
-                for (var i = 0; i < 3; i++) {
-                    participantList = participant_lists[i]
-                    var selectedParticipant = participantList.value;
-                    
-                    if (selectedParticipant !== '' ) {
-                        role = participantList.id.replace('List', '');
-                        var option = document.createElement('option');
-                        option.text = selectedParticipant + ' - ' + role;
-                        option.value = option.text
-                        teamList.add(option);
-                    }
-                    
-                    // If it's not BadNewsBears, remove from the participant list
-                    if (participantList !== badNewsBearsList) {
-                        participantList.remove(participantList.selectedIndex);
-                    }
-                    participantList.selectedIndex = -1;
+    if (manCount === 1 && womanCount === 1 && bearCount === 1) {
+        return true;
+    } else {
+        // Display an error message to the user
+        var errorMessage = 'Invalid team: ' + teamName + '. Each team must have exactly one man, one woman, and one bad news bear.';
+        showErrorMessage(errorMessage);
+        return false;
+    }
+}
 
-                }
+// Function to show an error message
+function showErrorMessage(message) {
+    // Display the error message (you can customize this part)
+    var errorDiv = document.getElementById('errorMessage');
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+
+    // Hide the message after a few seconds (you can adjust the timeout)
+    setTimeout(function () {
+        errorDiv.style.display = 'none';
+    }, 3000); // Hide after 3 seconds
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    var menList = document.getElementById('menList');
+    var womenList = document.getElementById('womenList');
+    var badNewsBearsList = document.getElementById('badNewsBearsList');
+    var participant_lists = [menList, womenList, badNewsBearsList];
+    var teamButtons = document.getElementsByClassName('teamButton');
+    var teamLists = document.getElementsByClassName('teamList');
+    var removeButtons = document.getElementsByClassName('removeButton');
+
+    function assignToTeam(teamName) {
+        var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
+
+        for (var i = 0; i < 3; i++) {
+            participantList = participant_lists[i];
+            var selectedParticipant = participantList.value;
+
+            if (selectedParticipant !== '') {
+                role = participantList.id.replace('List', '');
+                var option = document.createElement('option');
+                option.text = selectedParticipant + ' - ' + role;
+                option.value = option.text;
+                teamList.add(option);
             }
 
-            for (var i = 0; i < teamButtons.length; i++) {
-                teamButtons[i].addEventListener('click', function () {
-                    var teamName = this.getAttribute('data-team')
-                    assignToTeam(teamName)
-                });
+            // If it's not BadNewsBears, remove from the participant list
+            if (participantList !== badNewsBearsList) {
+                participantList.remove(participantList.selectedIndex);
             }
+            participantList.selectedIndex = -1;
+        }
+    }
 
-            for (var i = 0; i < removeButtons.length; i++) {
-                removeButtons[i].addEventListener('click', function () {
-                    var teamName = this.getAttribute('data-team');
-                    var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
-                    var origValue = teamList.value;
-                    var option = document.createElement('option');
-                    
-                    if (origValue.includes('badNewsBears')) {
-                        oldList = 'badNewsBearsList';
-                    } else if (origValue.includes('women')) {
-                        oldList = 'womenList';
-                    } else if (origValue.includes('men')) {
-                        oldList = 'menList';
-                    }
-                    selectedParticipant = origValue.replace(oldList, '');
-                    option.value = selectedParticipant;
-                    option.text = selectedParticipant;
-                    // Add participant back to the corresponding participant list
-                    if (oldList === "menList") {
-                        menList.add(option);
-                    } else if (oldList === "womenList") {
-                        womenList.add(option);
-                    }
-
-                    // Remove participant from the team list
-                    teamList.remove(teamList.selectedIndex);
-                });
-            }
-
-        // Your existing JavaScript code
-
-        // Add an event listener to the "Save" button
-        var saveButton = document.getElementById('saveButton');
-        saveButton.addEventListener('click', function () {
-            saveTeamLists();
+    for (var i = 0; i < teamButtons.length; i++) {
+        teamButtons[i].addEventListener('click', function () {
+            var teamName = this.getAttribute('data-team');
+            assignToTeam(teamName);
         });
+    }
 
-        // Function to save the team lists
-        function saveTeamLists() {
-            
-            
-            var teamLists = document.getElementsByClassName('teamList');
-            console.log(teamLists)
-            var teamsData = [];
+    for (var i = 0; i < removeButtons.length; i++) {
+        removeButtons[i].addEventListener('click', function () {
+            var teamName = this.getAttribute('data-team');
+            var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
+            var origValue = teamList.value;
+            var option = document.createElement('option');
 
-            for (var i = 0; i < teamLists.length; i++) {
-                var teamName = teamLists[i].getAttribute('data-team');
-                var participants = Array.from(teamLists[i].options).map(option => option.value);
-                teamsData.push({name: teamName, 'participants': participants});
+            if (origValue.includes('badNewsBears')) {
+                oldList = 'badNewsBearsList';
+            } else if (origValue.includes('women')) {
+                oldList = 'womenList';
+            } else if (origValue.includes('men')) {
+                oldList = 'menList';
             }
-            
-            // Include the "episode" variable in the JSON data
-            var requestData = {
-                episode: episode,
-                teams: teamsData
-            };
+            selectedParticipant = origValue.replace(oldList, '');
+            option.value = selectedParticipant;
+            option.text = selectedParticipant;
+            // Add participant back to the corresponding participant list
+            if (oldList === "menList") {
+                menList.add(option);
+            } else if (oldList === "womenList") {
+                womenList.add(option);
+            }
 
-            // Send the data to the backend using AJAX
-            fetch('/save_teams', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestData),
-            })
+            // Remove participant from the team list
+            teamList.remove(teamList.selectedIndex);
+        });
+    }
+
+    // Your existing JavaScript code
+
+    // Add an event listener to the "Save" button
+    var saveButton = document.getElementById('saveButton');
+    saveButton.addEventListener('click', function () {
+        saveTeamLists();
+    });
+
+    function saveTeamLists() {
+        var teamLists = document.getElementsByClassName('teamList');
+        var teamsData = [];
+
+        for (var i = 0; i < teamLists.length; i++) {
+            var teamName = teamLists[i].getAttribute('data-team');
+            var participants = Array.from(teamLists[i].options).map(option => option.value);
+            teamsData.push({ name: teamName, 'participants': participants });
+        }
+
+        // Include the "episode" variable in the JSON data
+        var requestData = {
+            episode: episode,
+            teams: teamsData
+        };
+
+        // Send the data to the backend using AJAX
+        fetch('/save_teams', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData),
+        })
             .then(response => response.json())
             .then(data => {
                 console.log('Success:', data);
@@ -169,24 +198,23 @@
             })
             .catch((error) => {
                 console.error('Error:', error);
-                showConfirmationMessage('Error saving data. Please try again.');
+                showErrorMessage('Error saving data. Please try again.');
             });
-        }
+    }
 
-        function showConfirmationMessage(message) {
-            // Display the confirmation message (you can customize this part)
-            var confirmationDiv = document.getElementById('confirmationMessage');
-            confirmationDiv.textContent = message;
-            confirmationDiv.style.display = 'block';
+    function showConfirmationMessage(message) {
+        // Display the confirmation message (you can customize this part)
+        var confirmationDiv = document.getElementById('confirmationMessage');
+        confirmationDiv.textContent = message;
+        confirmationDiv.style.display = 'block';
 
-            // Hide the message after a few seconds (you can adjust the timeout)
-            setTimeout(function () {
-                confirmationDiv.style.display = 'none';
-            }, 3000); // Hide after 3 seconds
-        }
+        // Hide the message after a few seconds (you can adjust the timeout)
+        setTimeout(function () {
+            confirmationDiv.style.display = 'none';
+        }, 3000); // Hide after 3 seconds
+    }
+});
 
-
-    });
+        
     </script>
-</body>
 {% endblock %}

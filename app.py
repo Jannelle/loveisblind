@@ -13,137 +13,180 @@ import pdb
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI']  = \
-        'sqlite:///' + os.path.join(basedir, 'database.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
 episode = 1
 
-# Association table that keeps track of each activity that each participant did
-# This is needed because it's a many-to-many relationship
 class Participant_Activity_Association(db.Model):
+    '''
+    Association table that keeps track of each activity that each participant did.
+
+    Columns:
+    id (int)                    : Primary key
+    participant_id (int)        : Foreign key referencing Participant.id
+    activity_id (int)           : Foreign key referencing Activity.id
+    episode (str)               : Episode number for which the activity is associated
+
+    Relationships:
+    participant (Participant)   : Reference to the Participant object
+    activity (Activity)         : Reference to the Activity object
+    '''
     __tablename__  = 'Participant_Activity_Association'
     id             = db.Column(db.Integer, primary_key=True)
     participant_id = db.Column(db.Integer, db.ForeignKey('Participant.id'))
-    activity_id    = db.Column(db.Integer, db.ForeignKey('Activity.id')   )
+    activity_id    = db.Column(db.Integer, db.ForeignKey('Activity.id'))
     episode        = db.Column(db.String(50))
 
-    participant = db.relationship("Participant", back_populates = "activity_association")
-    activity    = db.relationship("Activity"   , back_populates = "participant_association")
+    participant = db.relationship("Participant", back_populates="activity_association")
+    activity    = db.relationship("Activity", back_populates="participant_association")
 
 class Participant(db.Model):
-    ''' Participants are the Love is Blind cast members. They earn points by completing certain activities.
+    '''
+    Participants are the Love is Blind cast members. They earn points by completing certain activities.
 
     Columns:
     id (int)                    : Primary key
     name (str)                  : The participant's full name
-    activity_association (AppenderQuery)  : Collection of activites the Participant has done
-    bear_teams (AppenderQuery)    : Collection of teams that have clamed this Participant as a "bad news bear"
+    gender (str)                : Gender of the participant
+    activity_association (AppenderQuery)  : Collection of activities the Participant has done
+    man_teams (AppenderQuery)    : Collection of teams that have claimed this Participant as a "bad news bear"
+
+    Relationships:
+    activity_association (Query): Relationship to Participant_Activity_Association table
+    man_teams (Query)           : Relationship to Team table for Man teams
+    woman_teams (Query)         : Relationship to Team table for Woman teams
+    bear_teams (Query)          : Relationship to Team table for Bad News Bear teams
     '''
-    __tablename__         = "Participant"
-    id                    = db.Column(db.Integer, primary_key = True)
-    name                  = db.Column(db.String(100), unique = True, nullable = False)
-    gender                = db.Column(db.String(100), unique = False, nullable = False)
-    activity_association  = db.relationship('Participant_Activity_Association', lazy = 'dynamic', back_populates = 'participant')
-    man_teams             = db.relationship("Team", lazy = 'dynamic', uselist = True, primaryjoin = "Team.man_id == Participant.id")
-    woman_teams           = db.relationship("Team", lazy = 'dynamic', uselist = True, primaryjoin = "Team.woman_id == Participant.id")
-    bear_teams            = db.relationship("Team", lazy = 'dynamic', uselist = True, primaryjoin = "Team.bear_id == Participant.id")
+    __tablename__ = "Participant"
+    id                   = db.Column(db.Integer, primary_key=True)
+    name                 = db.Column(db.String(100), unique=True, nullable=False)
+    gender               = db.Column(db.String(100), unique=False, nullable=False)
+    activity_association = db.relationship('Participant_Activity_Association', lazy='dynamic', back_populates='participant')
+    man_teams            = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.man_id == Participant.id")
+    woman_teams          = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.woman_id == Participant.id")
+    bear_teams           = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.bear_id == Participant.id")
 
     def get_activities(self, episode):
-        activity_assocs = self.activity_association.filter_by(episode = episode)
+        '''
+        Get a list of activities associated with the participant for a specific episode.
+
+        Args:
+        - episode (int): Episode number for which to fetch activities
+
+        Returns:
+        - List of Activity objects
+        '''
+        activity_assocs = self.activity_association.filter_by(episode=episode)
         activities = []
         for activity_assoc in activity_assocs:
             activities.append(activity_assoc.activity)
         return activities
 
 class Team(db.Model):
-    '''The Team of participants that own points for the players. Each team can have one Man, one Woman, and one Bad News Bear.
+    '''
+    The Team of participants that own points for the players. Each team can have one Man, one Woman, and one Bad News Bear.
 
     Columns:
     id (int)            : Primary key
     owner_id (int)      : The id of the owner of the team in the Player table
     episode (int)       : The episode number that the team was created for
-    man (Participant)   : The male participant on the team. Comes from the Man table. Has a one-to-one relationship.
-    woman (Participant) : The female participant on the team. Comes from the Woman table. Has a one-to-one relationship.
-    bear (Participant)   : The participant on the team that gets points for doing "bad" activities. Each team can have one bear, but each bear can be a part of multiple teams.
+    man_id (int)        : Foreign key referencing Participant.id for the Man on the team
+    woman_id (int)      : Foreign key referencing Participant.id for the Woman on the team
+    bear_id (int)       : Foreign key referencing Participant.id for the Bad News Bear on the team
+
+    Relationships:
+    owner (Player)      : Reference to the Player object
+    man (Participant)   : Reference to the Participant object for the Man on the team
+    woman (Participant) : Reference to the Participant object for the Woman on the team
+    bear (Participant)  : Reference to the Participant object for the Bad News Bear on the team
     '''
     __tablename__ = "Team"
-    id         = db.Column(db.Integer, primary_key = True)
-    owner_id   = db.Column(db.Integer, db.ForeignKey("Player.id"))
-    episode    = db.Column(db.Integer)
+    id       = db.Column(db.Integer, primary_key=True)
+    owner_id = db.Column(db.Integer, db.ForeignKey("Player.id"))
+    episode  = db.Column(db.Integer)
 
-    man_id     = db.Column(db.Integer, db.ForeignKey('Participant.id'))
-    woman_id   = db.Column(db.Integer, db.ForeignKey('Participant.id'))
-    bear_id    = db.Column(db.Integer, db.ForeignKey('Participant.id'))
+    man_id   = db.Column(db.Integer, db.ForeignKey('Participant.id'))
+    woman_id = db.Column(db.Integer, db.ForeignKey('Participant.id'))
+    bear_id  = db.Column(db.Integer, db.ForeignKey('Participant.id'))
 
-    man        = db.relationship("Participant"
-                                , primaryjoin    = "Team.man_id == Participant.id"
-                                , back_populates = 'man_teams'
-                                , lazy           = True
-                                , uselist        = False
-                                )
-    woman      = db.relationship("Participant"
-                                , primaryjoin    = "Team.woman_id == Participant.id"
-                                , back_populates = 'woman_teams'
-                                , lazy           = True
-                                , uselist        = False
-                                )
-    bear        = db.relationship("Participant"
-                                , primaryjoin    = "Team.bear_id == Participant.id"
-                                , back_populates = 'bear_teams'
-                                , lazy           = True
-                                , uselist        = False
-                                )
-    
+    man   = db.relationship("Participant",
+                          primaryjoin="Team.man_id == Participant.id",
+                          back_populates='man_teams',
+                          lazy=True,
+                          uselist=False
+                          )
+    woman = db.relationship("Participant",
+                            primaryjoin="Team.woman_id == Participant.id",
+                            back_populates='woman_teams',
+                            lazy=True,
+                            uselist=False
+                            )
+    bear  = db.relationship("Participant",
+                           primaryjoin="Team.bear_id == Participant.id",
+                           back_populates='bear_teams',
+                           lazy=True,
+                           uselist=False
+                           )
 
 class Activity(db.Model):
-    ''' Activities that earn points.
+    '''
+    Activities that earn points.
 
     Columns:
     id (int)   : Primary key
     name (str) : The text description of the activity
     pts (int)  : How many points that activity is worth
-    type (str) ["good", "bad"] : 
-        The type of activity it is. Bad News Bears will only get points for "bad" activities; others will get
-        points for "good" activities.
-    participants (AppenderQuery) : Collection of participants that have done the activity
+    type (str) ["good", "bad"] : The type of activity it is. Bad News Bears will only get points for "bad" activities; others will get points for "good" activities.
+
+    Relationships:
+    participant_association (Query) : Relationship to Participant_Activity_Association table
     '''
     __tablename__ = "Activity"
-    id            = db.Column(db.Integer, primary_key = True)
-    name          = db.Column(db.String(100), unique = False, nullable = False)
-    pts           = db.Column(db.Integer,     unique = False, nullable = False)
-    type          = db.Column(db.String(100), unique = False, nullable = False)
-    participant_association  = db.relationship('Participant_Activity_Association', back_populates = 'activity')
+    id   = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=False, nullable=False)
+    pts  = db.Column(db.Integer, unique=False, nullable=False)
+    type = db.Column(db.String(100), unique=False, nullable=False)
+    participant_association = db.relationship('Participant_Activity_Association', back_populates='activity')
 
 
 class Player(db.Model):
-    '''The Players of the fantasy game. Each player has a name and a team.
+    '''
+    The Players of the fantasy game. Each player has a name and a team.
+
+    Columns:
+    id (int)   : Primary key
+    name (str) : The name of the player
+
+    Relationships:
+    teams (Query) : Relationship to Team table
     '''
     __tablename__ = "Player"
-    id        = db.Column(db.Integer, primary_key = True)
-    name      = db.Column(db.String(100), unique = True, nullable = False)
-    teams     = db.relationship("Team",
-                                backref = "owner",
-                                lazy    = "dynamic",
-                                uselist = True)
+    id    = db.Column(db.Integer, primary_key=True)
+    name  = db.Column(db.String(100), unique=True, nullable=False)
+    teams = db.relationship("Team", backref="owner", lazy="dynamic", uselist=True)
+
     def __repr__(self):
         return f'<Player {self.name}>'
-    
 
 def populate_players():
+    '''
+    Populate the Player table with initial data.
+    '''
     players = [
-        Player(name = "Katie"),
-        Player(name = "UC"),
-        Player(name = "Jannelle"),
-        Player(name = "Marc"),
-        Player(name = "Monica"),
+        Player(name="Katie"),
+        Player(name="UC"),
+        Player(name="Jannelle"),
+        Player(name="Marc"),
+        Player(name="Monica"),
     ]
 
     for player in players:
         db.session.add(player)
     db.session.commit()
+
 
 def populate_activities():
     activities = [
@@ -242,10 +285,10 @@ def reset_db():
     populate_players()
     populate_activities()
     populate_participants()
-    # fake_data()
+    fake_data()
     db.session.commit()
     
-    return redirect(url_for('index'))
+    return jsonify({"message": "Database reset successfully!"})
 
 def fake_data():
     for i in range(1, 6):
@@ -333,10 +376,14 @@ def calculate_player_points(player):
 @app.route('/score_episode/<int:episode>')
 def score_episode(episode):
     activities              = Activity.query.all()
+    # men   = Participant.query.filter_by(gender = 'male'  ) # Participant.query.join(Team, (Team.man_id   == Participant.id) & (Team.episode == episode))
+    # women = Participant.query.filter_by(gender = 'female') # Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode))
+    # bears = Participant.query.join(Team, (Team.bear_id  == Participant.id)) # Participant.query.join(Team, (Team.bear_id  == Participant.id) & (Team.episode == episode))
     men   = Participant.query.join(Team, (Team.man_id   == Participant.id) & (Team.episode == episode))
     women = Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode))
     bears = Participant.query.join(Team, (Team.bear_id  == Participant.id) & (Team.episode == episode))
-    roles_dict   = {
+
+    roles_dict = {
         'Men'            : men,
         'Women'          : women,
         'Bad News Bears' : bears,
@@ -366,7 +413,7 @@ def select_teams(episode):
 
 @app.route('/save_teams', methods = ('GET', 'POST'))
 def save_teams():
-    print('check')
+
     data = request.get_json()
     episode = data.get('episode')
     teams_to_parse = data.get('teams')
@@ -394,7 +441,43 @@ def save_teams():
 
         db.session.commit()
 
-    return jsonify({"message": "Team lists saved successfully"})
+    updated_data = fetch_updated_data()
+    return jsonify(updated_data)
+
+@app.route('/fetch_updated_data')
+def fetch_updated_data():
+    # Query the updated data from the database
+    # You may need to adjust this based on your actual data retrieval logic
+    players = Player.query.all()
+    # ... (any other data you need)
+
+    # Convert data to a dictionary or list that can be easily converted to JSON
+    updated_data = {
+        'players': [
+            {
+                'name'        : player.name,
+                'id'          : player.id,
+                'total_score' : calculate_player_points(player),
+                'teams': [
+                    {
+                        'id'           : team.id,
+                        'episode'      : team.episode,
+                        'man'          : team.man.name,
+                        'woman'        : team.woman.name,
+                        'bear'         : team.bear.name,
+                        'man_points'   : calculate_participant_points(team.man,   'good', team.episode),
+                        'woman_points' : calculate_participant_points(team.woman, 'good', team.episode),
+                        'bear_points'  : calculate_participant_points(team.bear,  'bad' , team.episode),
+                        
+                    }
+                    for team in player.teams.all()
+                ]
+            }
+            for player in players
+        ]
+    }
+
+    return updated_data
 
 @app.route('/increment_activity', methods=['POST'])
 def increment_activity():
