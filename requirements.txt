@@ -1,21 +1,22 @@
-blinker @ file:///home/conda/feedstock_root/build_artifacts/blinker_1698890160476/work
-click @ file:///home/conda/feedstock_root/build_artifacts/click_1692311806742/work
-Flask @ file:///home/conda/feedstock_root/build_artifacts/flask_1705682375678/work
-Flask-SQLAlchemy @ file:///home/conda/feedstock_root/build_artifacts/flask-sqlalchemy_1675194219027/work
-greenlet @ file:///Users/runner/miniforge3/conda-bld/greenlet_1703201714305/work
-importlib-metadata @ file:///home/conda/feedstock_root/build_artifacts/importlib-metadata_1703269254275/work
-itsdangerous @ file:///home/conda/feedstock_root/build_artifacts/itsdangerous_1648147185463/work
-Jinja2 @ file:///home/conda/feedstock_root/build_artifacts/jinja2_1704966972576/work
-MarkupSafe @ file:///Users/runner/miniforge3/conda-bld/markupsafe_1705779003444/work
-numpy @ file:///Users/runner/miniforge3/conda-bld/numpy_1704280751436/work/dist/numpy-1.26.3-cp312-cp312-macosx_11_0_arm64.whl#sha256=853ce29de12bbda1883c709c101f1d8eae8c9dc4d2614a360d4488a63bf0b1a4
-pandas @ file:///Users/runner/miniforge3/conda-bld/pandas_1705728479029/work
-python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/python-dateutil_1626286286081/work
-pytz @ file:///home/conda/feedstock_root/build_artifacts/pytz_1706549378554/work
+blinker==1.7.0
+click==8.1.7
+Flask==3.0.1
+Flask-SQLAlchemy==3.0.3
+greenlet==3.0.3
+importlib-metadata==7.0.1
+itsdangerous==2.1.2
+Jinja2==3.1.3
+MarkupSafe==2.1.4
+numpy==1.26.3
+pandas==2.2.0
+pip==23.3.2
+python-dateutil==2.8.2
+pytz==2023.4
 setuptools==69.0.3
-six @ file:///home/conda/feedstock_root/build_artifacts/six_1620240208055/work
-SQLAlchemy @ file:///Users/runner/miniforge3/conda-bld/sqlalchemy_1704267587327/work
-typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/typing_extensions_1702176139754/work
-tzdata @ file:///home/conda/feedstock_root/build_artifacts/python-tzdata_1703878702368/work
-Werkzeug @ file:///home/conda/feedstock_root/build_artifacts/werkzeug_1698235201373/work
+six==1.16.0
+SQLAlchemy==2.0.25
+typing_extensions==4.9.0
+tzdata==2023.4
+Werkzeug==3.0.1
 wheel==0.42.0
-zipp @ file:///home/conda/feedstock_root/build_artifacts/zipp_1695255097490/work
+zipp==3.17.0
