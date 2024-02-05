@@ -18,8 +18,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-episode = 1
-
 class Participant_Activity_Association(db.Model):
     '''
     Association table that keeps track of each activity that each participant did.
@@ -285,7 +283,7 @@ def reset_db():
     populate_players()
     populate_activities()
     populate_participants()
-    fake_data()
+    # fake_data()
     db.session.commit()
     
     return jsonify({"message": "Database reset successfully!"})
