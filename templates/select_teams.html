@@ -32,34 +32,41 @@
                         {% endfor %}
                     </select>
                 </td>
+                <td>
+
+                <label for="copyFromEpisode">Copy Teams from Episode:</label>
+                <select id="copyFromEpisode" onchange="populateTeams()">
+                    <option value="" selected disabled>Select an Episode</option>
+                    {% for episode_number in range(1, 13) %}
+                        <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
+                    {% endfor %}
+                </select>
+                </td>
             </tr>
         </table>
-        <div id="confirmationMessage" style="display: none; color: green; display: inline-block;"/></div>
+        <div id="confirmationMessage" style="display: none; color: green; display: inline-block;"></div>
         <div id="errorMessage" style="display: none; color: red;"></div>
 
         <div>
             <h2>Teams</h2>
             <table>
                 {% for player in players %}
-                <td>
-                    <h3>{{ player.name }}</h3>
-                    <select class="teamList" size="5" style="width: 200px;" data-team="{{ player.name }}"></select>
-                    <button class="teamButton" data-team="{{ player.name }}">Add to {{ player.name }}</button>
-                    <button class="removeButton" data-team="{{ player.name }}">Remove from {{ player.name }}</button>
-                </td>
-            {% endfor %}
-        </table>
+                    <td>
+                        <h3>{{ player.name }}</h3>
+                        <select class="teamList" size="5" style="width: 200px;" data-team="{{ player.name }}"></select>
+                        <button class="teamButton" data-team="{{ player.name }}">Add to {{ player.name }}</button>
+                        <button class="removeButton" data-team="{{ player.name }}">Remove from {{ player.name }}</button>
+                    </td>
+                {% endfor %}
+            </table>
         </div>
     </div>
 
     <button id="saveButton">Save</button>
-    
-
 
 <script>
-        
         // JavaScript code to handle participant selection and team assignment
-var episode = "{{ episode }}"; // Include the episode variable from the Flask template
+        var episode = "{{ episode }}"; // Include the episode variable from the Flask template
 
 // Function to validate each team
 function validateTeam(participants, teamName) {
@@ -91,6 +98,45 @@ function showErrorMessage(message) {
     }, 3000); // Hide after 3 seconds
 }
 
+function populateTeams() {
+        var copyFromEpisode = document.getElementById('copyFromEpisode');
+        var selectedEpisode = copyFromEpisode.value;
+
+        // Fetch teams data for the selected episode from the backend
+        fetch('/get_teams?episode=' + selectedEpisode)
+            .then(response => response.json())
+            .then(data => {
+                // Update team lists with the fetched data
+                data.teams.forEach(team => {
+                    var teamList = document.querySelector('.teamList[data-team="' + team.name + '"]');
+                    teamList.innerHTML = '';  // Clear existing options
+
+                    team.participants.forEach(participant => {
+                        var option = document.createElement('option');
+                        option.text = participant;
+                        option.value = participant;
+                        teamList.add(option);
+                    });
+                });
+
+                showConfirmationMessage('Teams copied successfully!');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                showErrorMessage('Error copying teams. Please try again.');
+            });
+    };    
+    function showConfirmationMessage(message) {
+        // Display the confirmation message (you can customize this part)
+        var confirmationDiv = document.getElementById('confirmationMessage');
+        confirmationDiv.textContent = message;
+        confirmationDiv.style.display = 'block';
+
+        // Hide the message after a few seconds (you can adjust the timeout)
+        setTimeout(function () {
+            confirmationDiv.style.display = 'none';
+        }, 3000); // Hide after 3 seconds
+    }    
 document.addEventListener('DOMContentLoaded', function () {
     var menList = document.getElementById('menList');
     var womenList = document.getElementById('womenList');
@@ -100,6 +146,8 @@ document.addEventListener('DOMContentLoaded', function () {
     var teamLists = document.getElementsByClassName('teamList');
     var removeButtons = document.getElementsByClassName('removeButton');
 
+
+    
     function assignToTeam(teamName) {
         var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
 
@@ -202,19 +250,12 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    function showConfirmationMessage(message) {
-        // Display the confirmation message (you can customize this part)
-        var confirmationDiv = document.getElementById('confirmationMessage');
-        confirmationDiv.textContent = message;
-        confirmationDiv.style.display = 'block';
 
-        // Hide the message after a few seconds (you can adjust the timeout)
-        setTimeout(function () {
-            confirmationDiv.style.display = 'none';
-        }, 3000); // Hide after 3 seconds
-    }
+
 });
 
-        
-    </script>
+
+</script>
+
 {% endblock %}
+</body>

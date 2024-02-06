@@ -136,12 +136,13 @@
         <h1>Fantasy Love is Blind: Season 6</h1>
     </header>
     <nav style="display: flex; align-items: center;">
+        <a href="{{ url_for('how_to_score') }}">How to score</a>
         <a href="{{ url_for('index') }}">Current scores</a>
         <a href="{{ url_for('castmembers') }}">Castmember scores</a>
         <form method="get" id="episodeForm" style="margin-right: 10px;">
             <label for="episodeSelect">Score episode:</label>
-            <select id="episodeSelect" name="episode" onchange="updateAction()">
-                <option value=0></option>
+            <select id="episodeSelect", name="episode" onchange="updateAction()">
+                <option value="" selected disabled>Select an Episode</option>
                 {% for episode_number in range(1, 13) %}
                     <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
                 {% endfor %}
@@ -150,7 +151,7 @@
         <form method="get" id="createTeamForm">
             <label for="createTeamSelect">Create team:</label>
             <select id="createTeamSelect" name="createTeam" onchange="updateActionCreateTeam()">
-                <option value=0></option>
+                <option value="" selected disabled>Select an Episode</option>
                 {% for episode_number in range(1, 13) %}
                     <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
                 {% endfor %}
@@ -176,25 +177,25 @@
             
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            var resetButton = document.getElementById('resetButton');
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     var resetButton = document.getElementById('resetButton');
 
-            resetButton.addEventListener('click', function() {
-                // Make an AJAX request to the backend when the button is clicked
-                fetch('/reset_db', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+        //     resetButton.addEventListener('click', function() {
+        //         // Make an AJAX request to the backend when the button is clicked
+        //         fetch('/reset_db', {
+        //             method: 'POST',
+        //             headers: {
+        //                 'Content-Type': 'application/json'
+        //             },
                     
-                });
-                window.location.replace("/");
+        //         });
+        //         window.location.replace("/");
                 
 
 
-            });
+        //     });
 
-            // Retrieve the selected episode from the URL
+        // Retrieve the selected episode from the URL
         var new_url         = window.location.pathname.split('/')
         var new_url_episode = new_url.pop()
         var new_url_link    = new_url.pop()
@@ -212,7 +213,7 @@
             }
             
         }
-        });
+        // });
     </script>
     <hr>
     <div class="content">
