@@ -10,6 +10,7 @@ def reset_db():
     populate_players()
     populate_activities()
     populate_participants()
+    populate_leagues()
     populate_episode_one_teams()
     db.session.commit()
     
@@ -19,11 +20,11 @@ def populate_players():
     Populate the Player table with initial data.
     '''
     players = [
-        Player(name="Katie"),
-        Player(name="UC"),
+        Player(name="Katie"   ),
+        Player(name="UC"      ),
         Player(name="Jannelle"),
-        Player(name="Marc"),
-        Player(name="Monica"),
+        Player(name="Marc"    ),
+        Player(name="Monica"  ),
     ]
 
     for player in players:
@@ -105,6 +106,12 @@ def populate_participants():
         db.session.add(participant)
     db.session.commit()
 
+def populate_leagues():
+    family_league  = League(name = 'family')
+    db.session.add(family_league)
+    friends_league = League(name = 'friends')
+    db.session.add(friends_league)
+    db.session.commit()
 
 def populate_episode_one_teams():
 
@@ -163,10 +170,10 @@ def populate_episode_one_teams():
     monica_team.bear   = Participant.query.filter_by(name = 'Ashley').one()
     monica.teams.append(monica_team)
 
+    league = League.query.filter_by(name = 'friends').one()
     for participant in [uc, katie, marc, jannelle, monica]:
-        db.session.add(participant)
+        league.players.append(participant)
 
     db.session.commit()
 
-
-populate_episode_one_teams()
+reset_db()

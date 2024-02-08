@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<body>
+    <h1>Players</h1>
+    
+    <!-- Form to add a new player -->
+    <form action="/add_or_remove_players" method="post">
+        <label for="player_name">Player name:</label>
+        <input type="text" name="player_name" id="player_name">
+        <label for="league_name">League:</label>
+        <select name="league_name" id="league_name">
+            {% for league in leagues %}
+                <option value="{{ league.name }}">{{ league.name }}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" name="add_player" value="Add">
+    </form>
+    
+    <hr>
+    
+    <!-- List of current players with form to remove each player -->
+    <ul>
+        {% for player in players %}
+            <li>
+                {{ player.name }}
+                <form action="/add_or_remove_players" method="post">
+                    <input type="hidden" name="player_id" value="{{ player.id }}">
+                    <input type="submit" name="remove_player" value="Remove">
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+</body>
+{% endblock %}

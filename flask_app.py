@@ -1,19 +1,37 @@
+from codecs import backslashreplace_errors
 import json
 import os
 from sys import activate_stack_trampoline
-from flask import Flask, render_template, request, url_for, redirect, jsonify
+from flask import Flask, render_template, request, url_for, redirect, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
 
-
+DEFAULT_LEAGUE_ID = 1
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 db = SQLAlchemy(app)
 
+class League(db.Model):
+    __tablename__ = "League"
+    id      = db.Column(db.Integer, primary_key=True)
+    name    = db.Column(db.String(100), unique=True, nullable=False)
+    players = db.relationship('Player', back_populates='league', uselist=True)
+
+    # Define league_slug property
+    @property
+    def league_slug(self):
+        import regex as re
+        # Convert name to lowercase and replace spaces with hyphens
+        slug = re.sub(r'\s+', '-', self.name.lower())
+        # Remove any non-alphanumeric characters except hyphens
+        slug = re.sub(r'[^a-z0-9-]', '', slug)
+        return slug
+    
 viewing_player_association = db.Table('viewing_player_association',
     db.Column('viewing_id', db.Integer, db.ForeignKey('Viewing.id')),
     db.Column('player_id', db.Integer, db.ForeignKey('Player.id'))
@@ -31,10 +49,12 @@ class Player(db.Model):
     teams (Query) : Relationship to Team table
     '''
     __tablename__ = "Player"
-    id       = db.Column(db.Integer, primary_key=True)
-    name     = db.Column(db.String(100), unique=True, nullable=False)
-    teams    = db.relationship("Team", backref="owner", lazy="dynamic", uselist=True)
-    viewings = db.relationship('Viewing', secondary=viewing_player_association, back_populates='players')
+    id        = db.Column(db.Integer, primary_key=True)
+    name      = db.Column(db.String(100), unique=False, nullable=False)
+    league_id = db.Column(db.Integer, db.ForeignKey('League.id'))
+    teams     = db.relationship("Team", backref="owner", lazy="dynamic", uselist=True)
+    viewings  = db.relationship('Viewing', secondary=viewing_player_association, back_populates='players')
+    league    = db.relationship("League", lazy=True, back_populates="players")
 
 class Viewing(db.Model):
     __tablename__ = 'Viewing'
@@ -193,10 +213,25 @@ class Activity(db.Model):
 
 @app.route('/', methods = ('GET', 'POST'))
 def index():
-    players = sorted(Player.query.all(), key=calculate_player_points, reverse=True)
-
-    return render_template('index.html', players = players)
+    # Check if the selected league ID is in session
+    selected_league_id = session.get('selected_league_id')
+    if selected_league_id is None:
+        # If no league is selected, redirect to the default league
+        return redirect(url_for('select_league', league_id=DEFAULT_LEAGUE_ID))
+    else:
+        # Render the page with the selected league
+        # You can retrieve the league data and pass it to the template
+        all_leagues = League.query.all()
+        selected_league = League.query.get(selected_league_id)
+        players = sorted(selected_league.players, key=calculate_player_points, reverse=True)
+        return render_template('index.html',  players = players, leagues = all_leagues, selected_league_id=selected_league_id)
     
+@app.route('/select_league/<int:league_id>', methods=['GET'])
+def select_league(league_id):
+    # Store the selected league ID in session
+    session['selected_league_id'] = league_id
+    # Redirect to the desired page or route
+    return redirect(url_for('index'))    
 
 @app.route('/how_to-score.html')
 def how_to_score():
@@ -211,9 +246,10 @@ def castmembers():
 
 @app.route('/get_teams', methods=['GET'])
 def get_teams():
-    episode = int(request.args.get('episode', 0))
-    teams = Team.query.filter_by(episode = episode).all()
-    # return jsonify({team.owner.name : team.__repr__() for team in teams})
+    selected_league_id = session.get('selected_league_id')
+    episode            = int(request.args.get('episode', 0))
+    teams              = Team.query.filter_by(episode = episode).join(Player).filter(Player.league_id == selected_league_id).all()
+    
     if len(teams) > 0:
         return jsonify({'teams': 
                         [
@@ -231,70 +267,28 @@ def get_teams():
     else:
         return jsonify({"message" : "No teams found for this episode!"})
 
-@app.template_global()
-def calculate_participant_points(participant, type, episode = None):
-        '''Calculates how many points a participant has earned.
-
-        Args:
-            participant (Participant) : The participant whose points we are evaluating.
-            type (str) ["good", "bad"]: Will be used to filter which activities will give that participant points.
-            episode                   : Which episode to calculate points for. If None, will get total.
-        '''
-        total_pts = 0
-        if participant is None:
-            return 0
-        if episode is None:
-            activity_assocs_to_search = participant.activity_association.all()
-        else:
-            activity_assocs_to_search = participant.activity_association.filter_by(episode = episode)
-        for activity_association in activity_assocs_to_search:
-            if activity_association.activity.type == type:
-                total_pts += activity_association.activity.pts
-        return total_pts
-
-
-
-# This decorator allows us to use this function in a template
-@app.template_global()
-def calculate_team_points(team):
-    '''Calculates how many points a team has. It does so by looping through each Participant in the team.'''
-    
-    total_points = 0
-    
-    # Adding points if Player attended the viewing
-    if team.attended_viewing:
-        total_points += 10
-
-    # Doing a separate loop for the man and woman compared to bear since they require different activity types
-    for participant in [team.man, team.woman]:
-        if participant: # skip if the participant is None (this shouldn't happen in practice, but happens during testing)
-            total_points += calculate_participant_points(participant, "good", team.episode)
-        
-    if team.bear: # skip if team has no Bad News Bear
-        total_points += calculate_participant_points(team.bear, "bad", team.episode)
-
-    return total_points
-
-@app.template_global()
-def calculate_player_points(player):
-    '''Calculates how many points a player has by looping through all of their teams.'''
-    total_points = 0
-    for team in player.teams.all():
-        total_points += calculate_team_points(team)
-    return total_points
 
 @app.route('/score_episode/<int:episode>', methods = ('GET', 'POST'))
 def score_episode(episode):
+    selected_league_id = session.get('selected_league_id')
+    
     if request.method == 'GET':
         activities = Activity.query.all()
-        players    = Player.query.all()
+        players    = League.query.filter_by(id = selected_league_id).one().players
 
         # men   = Participant.query.filter_by(gender = 'male'  ) # Participant.query.join(Team, (Team.man_id   == Participant.id) & (Team.episode == episode))
         # women = Participant.query.filter_by(gender = 'female') # Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode))
         # bears = Participant.query.join(Team, (Team.bear_id  == Participant.id)) # Participant.query.join(Team, (Team.bear_id  == Participant.id) & (Team.episode == episode))
-        men   = Participant.query.join(Team, (Team.man_id   == Participant.id) & (Team.episode == episode))
-        women = Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode))
-        bears = Participant.query.join(Team, (Team.bear_id  == Participant.id) & (Team.episode == episode))
+        men   = Participant.query.join(Team, (Team.man_id == Participant.id) & (Team.episode == episode)) \
+                         .join(Player, Player.id == Team.owner_id) \
+                         .filter(Player.league_id == selected_league_id)
+                                       
+        women = Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode)) \
+                         .join(Player, Player.id == Team.owner_id) \
+                         .filter(Player.league_id == selected_league_id)
+        bears = Participant.query.join(Team, (Team.bear_id == Participant.id) & (Team.episode == episode)) \
+                         .join(Player, Player.id == Team.owner_id) \
+                         .filter(Player.league_id == selected_league_id)
 
         roles_dict = {
             'Men'            : men,
@@ -303,6 +297,7 @@ def score_episode(episode):
         }
         
         return render_template('score_episode.html'
+                            , leagues = League.query.all()
                             , players = players
                             , episode    = episode
                             , roles_dict = roles_dict
@@ -332,12 +327,15 @@ def score_episode(episode):
 
 @app.route('/select_teams/<int:episode>')
 def select_teams(episode):
+    selected_league_id = session.get('selected_league_id')
+    
     participants = Participant.query.order_by(Participant.name).all()
     men          = Participant.query.filter_by(gender = 'male'  )
     women        = Participant.query.filter_by(gender = 'female')
-    players      = Player     .query.order_by(Player.name).all()
+    players      = Player     .query.filter_by(league_id = selected_league_id).order_by(Player.name).all()
     
     return render_template('select_teams.html'
+                           , leagues = League.query.all()
                            , participants = participants
                            , men          = men
                            , women        = women
@@ -345,15 +343,28 @@ def select_teams(episode):
                            , episode      = episode
                            )
 
-
 @app.route('/save_teams', methods = ('GET', 'POST'))
 def save_teams():
 
     data = request.get_json()
     episode = data.get('episode')
     teams_to_parse = data.get('teams')
+    selected_league_id = session.get('league_id')
 
-    Team.query.filter_by(episode = episode).delete()
+    # Select the IDs of the teams to delete
+    team_ids_to_delete = Team.query \
+        .filter_by(episode=episode) \
+        .join(Player) \
+        .filter(Player.league_id == selected_league_id) \
+        .with_entities(Team.id) \
+        .all()
+
+    # Extract the IDs from the result
+    team_ids = [id for id, in team_ids_to_delete]
+
+    # Perform the deletion
+    Team.query.filter(Team.id.in_(team_ids)).delete(synchronize_session=False)
+
 
     for team_to_parse in teams_to_parse:
         player = Player.query.filter_by(name = team_to_parse['name']).first()
@@ -383,7 +394,8 @@ def save_teams():
 def fetch_updated_data():
     # Query the updated data from the database
     # You may need to adjust this based on your actual data retrieval logic
-    players = Player.query.all()
+    selected_league = League.query.get(session.get('selected_league_id'))
+    players = selected_league.players
     # ... (any other data you need)
 
     # Convert data to a dictionary or list that can be easily converted to JSON
@@ -447,3 +459,89 @@ def increment_activity():
 @app.template_global()
 def get_activity_count(participant_id, activity_id):
     return len(Participant_Activity_Association.query.filter_by(participant_id = participant_id, activity_id = activity_id).all())
+
+
+@app.template_global()
+def calculate_participant_points(participant, type, episode = None):
+        '''Calculates how many points a participant has earned.
+
+        Args:
+            participant (Participant) : The participant whose points we are evaluating.
+            type (str) ["good", "bad"]: Will be used to filter which activities will give that participant points.
+            episode                   : Which episode to calculate points for. If None, will get total.
+        '''
+        total_pts = 0
+        if participant is None:
+            return 0
+        if episode is None:
+            activity_assocs_to_search = participant.activity_association.all()
+        else:
+            activity_assocs_to_search = participant.activity_association.filter_by(episode = episode)
+        for activity_association in activity_assocs_to_search:
+            if activity_association.activity.type == type:
+                total_pts += activity_association.activity.pts
+        return total_pts
+
+# This decorator allows us to use this function in a template
+@app.template_global()
+def calculate_team_points(team):
+    '''Calculates how many points a team has. It does so by looping through each Participant in the team.'''
+    
+    total_points = 0
+    
+    # Adding points if Player attended the viewing
+    if team.attended_viewing:
+        total_points += 10
+
+    # Doing a separate loop for the man and woman compared to bear since they require different activity types
+    for participant in [team.man, team.woman]:
+        if participant: # skip if the participant is None (this shouldn't happen in practice, but happens during testing)
+            total_points += calculate_participant_points(participant, "good", team.episode)
+        
+    if team.bear: # skip if team has no Bad News Bear
+        total_points += calculate_participant_points(team.bear, "bad", team.episode)
+
+    return total_points
+
+@app.template_global()
+def calculate_player_points(player):
+    '''Calculates how many points a player has by looping through all of their teams.'''
+    total_points = 0
+    for team in player.teams.all():
+        total_points += calculate_team_points(team)
+    return total_points
+
+@app.route('/add_player', methods=['POST'])
+def add_player():
+    if request.method == 'POST':
+        selected_league = League.query.filter_by(name = request.form['league_name']).one().id
+        db.session.add(Player(name = request.form['player_name']))
+        db.session.commit()
+
+        # Redirect to a success page or back to the form page
+        return redirect(url_for('add_or_remove_players'))
+    
+@app.route('/add_or_remove_players', methods=['GET', 'POST'])
+def add_or_remove_players():
+    if request.method == 'POST':
+        if 'add_player' in request.form:
+            # Add a new player
+            player_name = request.form['player_name']
+            league_name = request.form['league_name']
+            league_id = League.query.filter_by(name = league_name).one().id
+            if player_name:
+                new_player = Player(name = player_name, league_id = league_id)
+                db.session.add(new_player)
+                db.session.commit()
+        elif 'remove_player' in request.form:
+            # Remove a player
+            player_id = request.form['player_id']
+            player = Player.query.get(player_id)
+            if player:
+                db.session.delete(player)
+                db.session.commit()
+
+    # Fetch the list of players from the database
+    players = Player.query.all()
+    leagues = League.query.all()
+    return render_template('add_or_remove_players.html', players=players, leagues=leagues)

@@ -60,7 +60,7 @@
                         document.getElementById('woman-points-'    + teamID).innerText = team.woman_points;
                         document.getElementById('bear-points-'     + teamID).innerText = team.bear_points;
                         document.getElementById('episode-points-'  + teamID).innerText = team.episode_points;
-                    
+                        console.log(team.episode_points)
                         const attendanceElement = document.getElementById('attendance-' + teamID);
                         if (attendanceElement) {
                             attendanceElement.innerText = team.attended_viewing ? '(10)' : '(0)';

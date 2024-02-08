@@ -137,9 +137,20 @@
         <h1><a style="color: white; text-decoration: none;" href="{{ url_for('index') }}">Fantasy Love is Blind: Season 6</h1></a>
     </header>
     <nav style="display: flex; align-items: center;">
-        <a href="{{ url_for('index') }}">Current scores</a>
+        
+        <form method="get" id="leagueForm" style="margin-right: 50px; margin-left: 50px">
+            <label for="leagueSelect">Select League:</label>
+            <select id="leagueSelect" name="league" onchange="updateActionLeague()">
+                <option value="" selected disabled>Select a League</option>
+                {% for league in leagues %}
+                    <option value="{{ league.id }}">{{ league.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
 
-        <form method="get" id="createTeamForm" style="margin-right: 10px;">
+        <a href="{{ url_for('index') }}" >Current scores</a>
+
+        <form method="get" id="createTeamForm" style="margin-right: 50px; margin-left: 50px">
             <label for="createTeamSelect">Create team:</label>
             <select id="createTeamSelect" name="createTeam" onchange="updateActionCreateTeam()">
                 <option value="" selected disabled>Select an Episode</option>
@@ -149,7 +160,7 @@
             </select>
         </form>
 
-        <form method="get" id="episodeForm" style="margin-right: 10px;">
+        <form method="get" id="episodeForm" style="margin-right: 50px;">
             <label for="episodeSelect">Score episode:</label>
             <select id="episodeSelect", name="episode" onchange="updateAction()">
                 <option value="" selected disabled>Select an Episode</option>
@@ -159,13 +170,20 @@
             </select>
         </form>
 
-        <a href="{{ url_for('castmembers') }}">Castmember scores</a>
+        <a href="{{ url_for('castmembers') }}" style="margin-right: 75px;">Castmember scores</a>
         <a href="{{ url_for('how_to_score') }}">How to score</a>        
         
         <!-- <button id="resetButton" style="margin-left: 10px;"></button>Reset</button> -->
     </nav>
     
     <script>
+        function updateActionLeague() {
+            var selectedLeague = document.getElementById("leagueSelect").value;
+            var dropdown = document.getElementById("leagueSelect");
+            window.location.href = "/select_league/" + selectedLeague;
+            dropdown.selectedIndex = selectedLeague - 1;
+        }
+
         function updateAction() {
             var selectedEpisode = document.getElementById("episodeSelect").value;
             var dropdown = document.getElementById("episodeSelect");
