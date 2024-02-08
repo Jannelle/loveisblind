@@ -1,164 +1,17 @@
-import os
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ForeignKey
+from sys import path_importer_cache
+from flask_app import *
 
 
-basedir = os.path.abspath(os.path.dirname(__file__))
-
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'database.db')
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-db = SQLAlchemy(app)
-
-class Participant_Activity_Association(db.Model):
+def reset_db():
+    '''Resets the db and repopulates the tables.
     '''
-    Association table that keeps track of each activity that each participant did.
-
-    Columns:
-    id (int)                    : Primary key
-    participant_id (int)        : Foreign key referencing Participant.id
-    activity_id (int)           : Foreign key referencing Activity.id
-    episode (str)               : Episode number for which the activity is associated
-
-    Relationships:
-    participant (Participant)   : Reference to the Participant object
-    activity (Activity)         : Reference to the Activity object
-    '''
-    __tablename__  = 'Participant_Activity_Association'
-    id             = db.Column(db.Integer, primary_key=True)
-    participant_id = db.Column(db.Integer, db.ForeignKey('Participant.id'))
-    activity_id    = db.Column(db.Integer, db.ForeignKey('Activity.id'))
-    episode        = db.Column(db.String(50))
-
-    participant = db.relationship("Participant", back_populates="activity_association")
-    activity    = db.relationship("Activity", back_populates="participant_association")
-
-class Participant(db.Model):
-    '''
-    Participants are the Love is Blind cast members. They earn points by completing certain activities.
-
-    Columns:
-    id (int)                    : Primary key
-    name (str)                  : The participant's full name
-    gender (str)                : Gender of the participant
-    activity_association (AppenderQuery)  : Collection of activities the Participant has done
-    man_teams (AppenderQuery)    : Collection of teams that have claimed this Participant as a "bad news bear"
-
-    Relationships:
-    activity_association (Query): Relationship to Participant_Activity_Association table
-    man_teams (Query)           : Relationship to Team table for Man teams
-    woman_teams (Query)         : Relationship to Team table for Woman teams
-    bear_teams (Query)          : Relationship to Team table for Bad News Bear teams
-    '''
-    __tablename__ = "Participant"
-    id                   = db.Column(db.Integer, primary_key=True)
-    name                 = db.Column(db.String(100), unique=True, nullable=False)
-    gender               = db.Column(db.String(100), unique=False, nullable=False)
-    activity_association = db.relationship('Participant_Activity_Association', lazy='dynamic', back_populates='participant')
-    man_teams            = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.man_id == Participant.id")
-    woman_teams          = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.woman_id == Participant.id")
-    bear_teams           = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.bear_id == Participant.id")
-
-    def get_activities(self, episode):
-        '''
-        Get a list of activities associated with the participant for a specific episode.
-
-        Args:
-        - episode (int): Episode number for which to fetch activities
-
-        Returns:
-        - List of Activity objects
-        '''
-        activity_assocs = self.activity_association.filter_by(episode=episode)
-        activities = []
-        for activity_assoc in activity_assocs:
-            activities.append(activity_assoc.activity)
-        return activities
-
-class Team(db.Model):
-    '''
-    The Team of participants that own points for the players. Each team can have one Man, one Woman, and one Bad News Bear.
-
-    Columns:
-    id (int)            : Primary key
-    owner_id (int)      : The id of the owner of the team in the Player table
-    episode (int)       : The episode number that the team was created for
-    man_id (int)        : Foreign key referencing Participant.id for the Man on the team
-    woman_id (int)      : Foreign key referencing Participant.id for the Woman on the team
-    bear_id (int)       : Foreign key referencing Participant.id for the Bad News Bear on the team
-
-    Relationships:
-    owner (Player)      : Reference to the Player object
-    man (Participant)   : Reference to the Participant object for the Man on the team
-    woman (Participant) : Reference to the Participant object for the Woman on the team
-    bear (Participant)  : Reference to the Participant object for the Bad News Bear on the team
-    '''
-    __tablename__ = "Team"
-    id       = db.Column(db.Integer, primary_key=True)
-    owner_id = db.Column(db.Integer, db.ForeignKey("Player.id"))
-    episode  = db.Column(db.Integer)
-
-    man_id   = db.Column(db.Integer, db.ForeignKey('Participant.id'))
-    woman_id = db.Column(db.Integer, db.ForeignKey('Participant.id'))
-    bear_id  = db.Column(db.Integer, db.ForeignKey('Participant.id'))
-
-    man   = db.relationship("Participant",
-                          primaryjoin="Team.man_id == Participant.id",
-                          back_populates='man_teams',
-                          lazy=True,
-                          uselist=False
-                          )
-    woman = db.relationship("Participant",
-                            primaryjoin="Team.woman_id == Participant.id",
-                            back_populates='woman_teams',
-                            lazy=True,
-                            uselist=False
-                            )
-    bear  = db.relationship("Participant",
-                           primaryjoin="Team.bear_id == Participant.id",
-                           back_populates='bear_teams',
-                           lazy=True,
-                           uselist=False
-                           )
-
-class Activity(db.Model):
-    '''
-    Activities that earn points.
-
-    Columns:
-    id (int)   : Primary key
-    name (str) : The text description of the activity
-    pts (int)  : How many points that activity is worth
-    type (str) ["good", "bad"] : The type of activity it is. Bad News Bears will only get points for "bad" activities; others will get points for "good" activities.
-
-    Relationships:
-    participant_association (Query) : Relationship to Participant_Activity_Association table
-    '''
-    __tablename__ = "Activity"
-    id   = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), unique=False, nullable=False)
-    pts  = db.Column(db.Integer, unique=False, nullable=False)
-    type = db.Column(db.String(100), unique=False, nullable=False)
-    participant_association = db.relationship('Participant_Activity_Association', back_populates='activity')
-
-
-class Player(db.Model):
-    '''
-    The Players of the fantasy game. Each player has a name and a team.
-
-    Columns:
-    id (int)   : Primary key
-    name (str) : The name of the player
-
-    Relationships:
-    teams (Query) : Relationship to Team table
-    '''
-    __tablename__ = "Player"
-    id    = db.Column(db.Integer, primary_key=True)
-    name  = db.Column(db.String(100), unique=True, nullable=False)
-    teams = db.relationship("Team", backref="owner", lazy="dynamic", uselist=True)
+    db.drop_all()
+    db.create_all()
+    populate_players()
+    populate_activities()
+    populate_participants()
+    populate_episode_one_teams()
+    db.session.commit()
     
 
 def populate_players():
@@ -252,35 +105,68 @@ def populate_participants():
         db.session.add(participant)
     db.session.commit()
 
-def reset_db():
-    '''Resets the db and repopulates the tables.
-    '''
-    db.drop_all()
-    db.create_all()
-    populate_players()
-    populate_activities()
-    populate_participants()
-    # fake_data()
-    db.session.commit()    
 
-def fake_data():
-    '''
-    Makes fake teams for debugging
-    '''
-    import random
-    for i in range(1, 6):
-        
-        p = Player.query.get(i)
+def populate_episode_one_teams():
 
-        for e in range(0, 3):
-            new_team = Team(episode = e + 1)
-            db.session.add(new_team)
-            # Men start at id 16, which is why I'm adding + 14 for men (it's not exactly right).
-            # I did some janky math to try to make sure everyone gets a different man/woman,
-            # but I did it wrong. However, I think the overlap here is actaully good because
-            # it will help me test when people draft the same man.
-            new_team.woman = Participant.query.get((i * 2) + e)
-            new_team.man   = Participant.query.get((i * 2) + e + 14)
-            new_team.bear  = Participant.query.get(random.randint(1, 30))
-            p.teams.append(new_team)
-            db.session.commit()    
+    episode = 1
+
+    #### UC ####
+    uc             = Player.query.filter_by(name = 'UC').one()
+    uc_team        = Team(episode = episode)
+    db.session.add(uc_team)
+
+    uc_team.man    = Participant.query.filter_by(name ='Kenneth').one()
+    uc_team.woman  = Participant.query.filter_by(name ='Danette').one()
+    uc_team.bear   = Participant.query.filter_by(name ='Nolan'  ).one()
+    uc.teams.append(uc_team)
+
+    #### Katie ####
+    katie             = Player.query.filter_by(name = 'Katie').one()
+    katie_team        = Team(episode = episode)
+    db.session.add(katie_team)
+
+    katie_team.man    = Participant.query.filter_by(name = 'Drake').one()
+    katie_team.woman  = Participant.query.filter_by(name = 'Amy'  ).one()
+    katie_team.bear   = Participant.query.filter_by(name = 'Ben'  ).one()
+    katie.teams.append(katie_team)
+
+
+    #### Marc ####
+    marc             = Player.query.filter_by(name = 'Marc').one()
+    marc_team        = Team(episode = episode)
+    db.session.add(marc_team)
+
+    marc_team.man    = Participant.query.filter_by(name = 'Matthew' ).one()
+    marc_team.woman  = Participant.query.filter_by(name = 'Amy C.'  ).one()
+    marc_team.bear   = Participant.query.filter_by(name = 'Brittany').one()
+    marc.teams.append(marc_team)
+
+
+    #### Jannelle ####
+    jannelle             = Player.query.filter_by(name = 'Jannelle').one()
+    jannelle_team        = Team(episode = episode)
+    db.session.add(jannelle_team)
+
+    jannelle_team.man    = Participant.query.filter_by(name = 'Ariel'    ).one()
+    jannelle_team.woman  = Participant.query.filter_by(name = 'Alejandra').one()
+    jannelle_team.bear   = Participant.query.filter_by(name = 'Trevor'   ).one()
+    jannelle.teams.append(jannelle_team)
+
+
+    #### Monica ####
+    monica             = Player.query.filter_by(name = 'Monica').one()
+    monica_team        = Team(episode = episode)
+    db.session.add(monica_team)
+
+    monica_team.man    = Participant.query.filter_by(name = 'Clay'  ).one()
+    monica_team.woman  = Participant.query.filter_by(name = 'Sunni' ).one()
+    monica_team.bear   = Participant.query.filter_by(name = 'Ashley').one()
+    monica.teams.append(monica_team)
+
+    for participant in [uc, katie, marc, jannelle, monica]:
+        db.session.add(participant)
+
+    db.session.commit()
+
+
+populate_episode_one_teams()

@@ -6,6 +6,16 @@
 
 {% block content %}
     <title>Episode {{ episode }}</title>
+<body>
+    <b>Attendance:</b>
+    <form action="/score_episode/{{ episode }}" method="POST">
+        <span style="font-size: 14px">
+        {% for player in players %}
+            <input type="checkbox" name="player-checkboxes" value="{{ player.id }}"> {{ player.name }}<br>
+        {% endfor %}
+        </span>
+        <button type="submit">Submit</button>
+    </form>
 
 <!-- Men/Women table -->
     <table class="styled-table">
@@ -107,16 +117,17 @@
     
 
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var episode = "{{ episode }}"; // Include the episode variable from the Flask template
         var updateButtons = document.querySelectorAll('.update-button');
         var minusButtons  = document.querySelectorAll('.minus-button' );
-
+        
         // Function to handle button clicks (both increment and decrement)
         function handleButtonClick(button, increment) {
             var participant_id = button.getAttribute('data-participant');
             var activity_id = button.getAttribute('data-activity');
-            var episode = "{{ episode }}"; // Include the episode variable from the Flask template
+            
 
             // Send the update to the backend
             fetch('/increment_activity', {
@@ -162,6 +173,6 @@
         });
     });
 
-    </script>
+</script>
 {% endblock %}
 </body>

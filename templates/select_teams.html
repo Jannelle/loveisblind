@@ -4,6 +4,7 @@
 <body>
     {% block title %}
     Selecting Teams for Episode {{ episode }}
+    (To clear selection, hold command/ctrl when clicking the list)
     {% endblock %}
     <div>
         <table style="border-spacing: 50 0px;">
@@ -65,25 +66,8 @@
     <button id="saveButton">Save</button>
 
 <script>
-        // JavaScript code to handle participant selection and team assignment
-        var episode = "{{ episode }}"; // Include the episode variable from the Flask template
-
-// Function to validate each team
-function validateTeam(participants, teamName) {
-    // Validate that there is exactly one man, one woman, and one bad news bear
-    var manCount = participants.filter(participant => participant.includes('men')).length;
-    var womanCount = participants.filter(participant => participant.includes('women')).length;
-    var bearCount = participants.filter(participant => participant.includes('badNewsBears')).length;
-
-    if (manCount === 1 && womanCount === 1 && bearCount === 1) {
-        return true;
-    } else {
-        // Display an error message to the user
-        var errorMessage = 'Invalid team: ' + teamName + '. Each team must have exactly one man, one woman, and one bad news bear.';
-        showErrorMessage(errorMessage);
-        return false;
-    }
-}
+// JavaScript code to handle participant selection and team assignment
+var episode = "{{ episode }}"; // Include the episode variable from the Flask template
 
 // Function to show an error message
 function showErrorMessage(message) {
@@ -99,44 +83,58 @@ function showErrorMessage(message) {
 }
 
 function populateTeams() {
-        var copyFromEpisode = document.getElementById('copyFromEpisode');
-        var selectedEpisode = copyFromEpisode.value;
+    var copyFromEpisode = document.getElementById('copyFromEpisode');
+    var selectedEpisode = copyFromEpisode.value;
+    if (selectedEpisode === "") {
+        selectedEpisode = episode
+    };
 
-        // Fetch teams data for the selected episode from the backend
-        fetch('/get_teams?episode=' + selectedEpisode)
-            .then(response => response.json())
-            .then(data => {
-                // Update team lists with the fetched data
-                data.teams.forEach(team => {
-                    var teamList = document.querySelector('.teamList[data-team="' + team.name + '"]');
-                    teamList.innerHTML = '';  // Clear existing options
+    // Fetch teams data for the selected episode from the backend
+    fetch('/get_teams?episode=' + selectedEpisode)
+        .then(response => response.json())
+        .then(data => {
+            // Update team lists with the fetched data
+            data.teams.forEach(team => {
+                var teamList = document.querySelector('.teamList[data-team="' + team.name + '"]');
+                teamList.innerHTML = '';  // Clear existing options
 
-                    team.participants.forEach(participant => {
-                        var option = document.createElement('option');
-                        option.text = participant;
-                        option.value = participant;
-                        teamList.add(option);
-                    });
-                });
+                for (const [oldListName, participant] of Object.entries(team.participants)) {
+                    var option = document.createElement('option');
+                    option.text = participant;
+                    option.value = participant;
+                    option.dataset.oldListName = oldListName; // Store the role in dataset
+                    teamList.add(option);
 
-                showConfirmationMessage('Teams copied successfully!');
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                showErrorMessage('Error copying teams. Please try again.');
-            });
-    };    
-    function showConfirmationMessage(message) {
-        // Display the confirmation message (you can customize this part)
-        var confirmationDiv = document.getElementById('confirmationMessage');
-        confirmationDiv.textContent = message;
-        confirmationDiv.style.display = 'block';
+                    // Remove the participant from the corresponding old list
+                    var oldList = document.getElementById(oldListName);
+                    for (var j = 0; j < oldList.options.length; j++) {
+                        if (oldList.options[j].value === participant) {
+                            oldList.remove(j);
+                            break;
+                        }
+                }
+            }
+        });
+            showConfirmationMessage('Teams copied successfully!');
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            showErrorMessage('Error copying teams. Please try again.');
+        });
+};
 
-        // Hide the message after a few seconds (you can adjust the timeout)
-        setTimeout(function () {
-            confirmationDiv.style.display = 'none';
-        }, 3000); // Hide after 3 seconds
-    }    
+function showConfirmationMessage(message) {
+    // Display the confirmation message (you can customize this part)
+    var confirmationDiv = document.getElementById('confirmationMessage');
+    confirmationDiv.textContent = message;
+    confirmationDiv.style.display = 'block';
+
+    // Hide the message after a few seconds (you can adjust the timeout)
+    setTimeout(function () {
+        confirmationDiv.style.display = 'none';
+    }, 3000); // Hide after 3 seconds
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     var menList = document.getElementById('menList');
     var womenList = document.getElementById('womenList');
@@ -146,29 +144,38 @@ document.addEventListener('DOMContentLoaded', function () {
     var teamLists = document.getElementsByClassName('teamList');
     var removeButtons = document.getElementsByClassName('removeButton');
 
+    var listsToDeselect = [menList, womenList, badNewsBearsList]
 
+    for (var i = 0; i < listsToDeselect.length; i++) {
+        listsToDeselect[i].addEventListener('click', function () {
+        if (event.metaKey || event.ctrlKey) {
+            this.selectedIndex = -1
+            }});
+        }
     
     function assignToTeam(teamName) {
         var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
 
         for (var i = 0; i < 3; i++) {
-            participantList = participant_lists[i];
+            var participantList = participant_lists[i];
             var selectedParticipant = participantList.value;
 
             if (selectedParticipant !== '') {
-                role = participantList.id.replace('List', '');
+                var oldListName = participantList.id;
                 var option = document.createElement('option');
-                option.text = selectedParticipant + ' - ' + role;
+                option.text = selectedParticipant
                 option.value = option.text;
+                option.dataset.oldListName = oldListName
                 teamList.add(option);
             }
 
-            // If it's not BadNewsBears, remove from the participant list
-            if (participantList !== badNewsBearsList) {
-                participantList.remove(participantList.selectedIndex);
-            }
+            // // If it's not BadNewsBears, remove from the participant list
+            // if (participantList !== badNewsBearsList) {
+            //     participantList.remove(participantList.selectedIndex);
+            // }
+            participantList.remove(participantList.selectedIndex);
             participantList.selectedIndex = -1;
-        }
+        };
     }
 
     for (var i = 0; i < teamButtons.length; i++) {
@@ -182,27 +189,20 @@ document.addEventListener('DOMContentLoaded', function () {
         removeButtons[i].addEventListener('click', function () {
             var teamName = this.getAttribute('data-team');
             var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
-            var origValue = teamList.value;
-            var option = document.createElement('option');
 
-            if (origValue.includes('badNewsBears')) {
-                oldList = 'badNewsBearsList';
-            } else if (origValue.includes('women')) {
-                oldList = 'womenList';
-            } else if (origValue.includes('men')) {
-                oldList = 'menList';
-            }
-            selectedParticipant = origValue.replace(oldList, '');
+            var selectedOption = teamList.options[teamList.selectedIndex];
+            var selectedParticipant = teamList.value;
+            var oldListName = selectedOption.dataset.oldListName;
+            var oldList = document.getElementById(oldListName);
+            
+            var option = document.createElement('option');
             option.value = selectedParticipant;
             option.text = selectedParticipant;
-            // Add participant back to the corresponding participant list
-            if (oldList === "menList") {
-                menList.add(option);
-            } else if (oldList === "womenList") {
-                womenList.add(option);
-            }
 
-            // Remove participant from the team list
+            // if (['menList', 'womenList'].includes(oldListName)) {
+            //     oldList.add(option);
+            // }
+            oldList.add(option);
             teamList.remove(teamList.selectedIndex);
         });
     }
@@ -216,44 +216,79 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function saveTeamLists() {
-        var teamLists = document.getElementsByClassName('teamList');
-        var teamsData = [];
+    var teamLists = document.getElementsByClassName('teamList');
+    var teamsData = [];
+    var errors = [];
 
-        for (var i = 0; i < teamLists.length; i++) {
-            var teamName = teamLists[i].getAttribute('data-team');
-            var participants = Array.from(teamLists[i].options).map(option => option.value);
-            teamsData.push({ name: teamName, 'participants': participants });
+    for (var i = 0; i < teamLists.length; i++) {
+        var teamName = teamLists[i].getAttribute('data-team');
+        var participants = Array.from(teamLists[i].options).map(option => {
+            return {
+                name: option.value,
+                origin_list: option.dataset.oldListName  // Access the role from the dataset
+            };
+        });
+
+        // Validate each team
+        var manCount = participants.filter(participant => participant.origin_list === 'menList').length;
+        var womanCount = participants.filter(participant => participant.origin_list === 'womenList').length;
+        var bearCount = participants.filter(participant => participant.origin_list === 'badNewsBearsList').length;
+
+        if (manCount !== 1) {
+            var men = participants.filter(participant => participant.origin_list === 'menList').map(participant => participant.name).join(', ');
+            errors.push('Team ' + teamName + ' has ' + manCount + ' men: ' + men);
+        }
+        if (womanCount !== 1) {
+            var women = participants.filter(participant => participant.origin_list === 'womenList').map(participant => participant.name).join(', ');
+            errors.push('Team ' + teamName + ' has ' + womanCount + ' women: ' + women);
+        }
+        if (bearCount !== 1) {
+            var bears = participants.filter(participant => participant.origin_list === 'badNewsBearsList').map(participant => participant.name).join(', ');
+            errors.push('Team ' + teamName + ' has ' + bearCount + ' Bad News Bears: ' + bears);
         }
 
-        // Include the "episode" variable in the JSON data
-        var requestData = {
-            episode: episode,
-            teams: teamsData
-        };
+        teamsData.push({ 'name': teamName, 'participants': participants });
+    }
 
-        // Send the data to the backend using AJAX
-        fetch('/save_teams', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData),
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                showConfirmationMessage('Data saved successfully!');
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                showErrorMessage('Error saving data. Please try again.');
-            });
+    // If there are errors, display them to the user and prevent saving
+    if (errors.length > 0) {
+        var errorMessage = 'Error saving teams:';
+        errors.forEach(error => {
+            errorMessage += '\n- ' + error;
+        });
+        showErrorMessage(errorMessage);
+        return;
     }
 
 
+    // Include the "episode" variable in the JSON data
+    var requestData = {
+        episode: episode,
+        teams: teamsData
+    };
+    console.log(JSON.stringify(requestData));
 
+    // Send the data to the backend using AJAX
+    fetch('/save_teams', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Success:', data);
+            showConfirmationMessage('Data saved successfully!');
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+            showErrorMessage('Error saving data. Please try again.');
+        });
+}
 });
 
+populateTeams()
 
 </script>
 

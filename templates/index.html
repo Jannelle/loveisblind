@@ -8,12 +8,17 @@
     {% for player in players %}
     <div class="data-square">
         <div class="player-info">
-            <h3>{{ player.name }}</h3>
-            <p>Total Score: <span id="total-score-{{ player.id }}">{{ calculate_player_points(player) }}</span></p>
+            <b><p>{{ player.name }}</p></b>
+            <p>Total Score: <b><span id="total-score-{{ player.id }}">{{ calculate_player_points(player) }}</span></b></p>
         </div>
         {% for team in player.teams.all() %}
         <div class="episode-info" id="team-{{ team.id }}">
-            <p><b>Episode {{ team.episode }}</b></p>
+            <table style="width: 100%; text-align: center; background-color: darkblue; color: white;    ">
+                <tr><td>
+                <p><b>Episode {{ team.episode }}: (<span id ='episode-points-{{ team.id }}'>{{ team.episode_points }}</span>)</b></p>
+                </td></tr>
+            </table>
+            <p><b>Attendance: <span id="attendance-{{ team.id }}">(0)</span></b></p>
             {% if team.man is not none %}
             <p><b>Man:</b> <span id="man-{{ team.id }}">{{ team.man.name }}</span> <b>(<span id="man-points-{{ team.id }}">{{ calculate_participant_points(team.man, 'good', team.episode) }}</span>)</b></p>
             {% endif %}
@@ -32,39 +37,45 @@
     </body>
 
     <script>
-        // Use JavaScript to make an AJAX request and update the page
-        function updatePage() {
-            fetch('/fetch_updated_data')
-                .then(response => response.json())
-                .then(data => {
-                    data.players.forEach(player => {
-                        const playerID = player.id;
-                        const totalScoreElement = document.getElementById('total-score-' + playerID);
-                        if (totalScoreElement) {
-                            totalScoreElement.innerText = player.total_score;
-                            console.log(player.total_score)
-                        } else {
-                            console.error('Total score element not found for player ID:', playerID);
+    // Use JavaScript to make an AJAX request and update the page
+    function updatePage() {
+        fetch('/fetch_updated_data')
+            .then(response => response.json())
+            .then(data => {
+                data.players.forEach(player => {
+                    const playerID = player.id;
+                    const totalScoreElement = document.getElementById('total-score-' + playerID);
+                    if (totalScoreElement) {
+                        totalScoreElement.innerText = player.total_score;
+                    } else {
+                        console.error('Total score element not found for player ID:', playerID);
+                    }
+                    // Update the episode scores
+                    player.teams.forEach(team => {
+                        const teamID = team.id;
+                        document.getElementById('man-'             + teamID).innerText = team.man;
+                        document.getElementById('woman-'           + teamID).innerText = team.woman;
+                        document.getElementById('bear-'            + teamID).innerText = team.bear;
+                        document.getElementById('man-points-'      + teamID).innerText = team.man_points;
+                        document.getElementById('woman-points-'    + teamID).innerText = team.woman_points;
+                        document.getElementById('bear-points-'     + teamID).innerText = team.bear_points;
+                        document.getElementById('episode-points-'  + teamID).innerText = team.episode_points;
+                    
+                        const attendanceElement = document.getElementById('attendance-' + teamID);
+                        if (attendanceElement) {
+                            attendanceElement.innerText = team.attended_viewing ? '(10)' : '(0)';
                         }
-                        // Update the episode scores
-                        player.teams.forEach(team => {
-                            const teamID = team.id;
-                            document.getElementById('man-' + teamID).innerText = team.man;
-                            document.getElementById('woman-' + teamID).innerText = team.woman;
-                            document.getElementById('bear-' + teamID).innerText = team.bear;
-                            document.getElementById('man-points-' + teamID).innerText = team.man_points;
-                            document.getElementById('woman-points-' + teamID).innerText = team.woman_points;
-                            document.getElementById('bear-points-' + teamID).innerText = team.bear_points;
-                        });
                     });
-                })
-                .catch(error => console.error('Error fetching updated data:', error));
-        }
+                });
+            })
+            .catch(error => console.error('Error fetching updated data:', error));
+    }
 
-        
-        // // Call the updatePage function initially and set up an interval for periodic updates
-        updatePage();
-        setInterval(updatePage, 60000);  // Update every 60 seconds (adjust as needed)
+    
+    // // Call the updatePage function initially and set up an interval for periodic updates
+    updatePage();
+    setInterval(updatePage, 60000);  // Update every 60 seconds (adjust as needed)
+    
     </script>
     
 {% endblock %}
