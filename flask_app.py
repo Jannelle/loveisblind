@@ -63,7 +63,7 @@ class Player(db.Model):
     __tablename__ = "Player"
     id        = db.Column(db.Integer, primary_key=True)
     name      = db.Column(db.String(100), unique=False, nullable=False)
-    league_id = db.Column(db.Integer, db.ForeignKey('League.id'))
+    league_id = db.Column(db.Integer, db.ForeignKey('League.id'), nullable=False)
     teams     = db.relationship("Team", backref="owner", lazy="dynamic", uselist=True)
     viewings  = db.relationship('Viewing', secondary=viewing_player_association, back_populates='players')
     league    = db.relationship("League", lazy=True, back_populates="players")
