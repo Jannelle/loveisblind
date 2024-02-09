@@ -4,8 +4,10 @@ import os
 from flask import Flask, render_template, request, url_for, redirect, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
+from functools import wraps
 
-DEFAULT_LEAGUE_ID = 1
+DEFAULT_LEAGUE_ID = 1  # Set the default league ID here
+
 basedir = os.path.abspath(os.path.dirname(__file__))
 
 app = Flask(__name__)
@@ -14,6 +16,17 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 
 db = SQLAlchemy(app)
+
+def set_default_league_id(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Check if the selected league ID is in session
+        selected_league_id = session.get('selected_league_id')
+        if selected_league_id is None:
+            # If no league is selected, set the default league ID
+            session['selected_league_id'] = DEFAULT_LEAGUE_ID
+        return f(*args, **kwargs)
+    return decorated_function
 
 class League(db.Model):
     __tablename__ = "League"
@@ -240,38 +253,43 @@ class Activity(db.Model):
     type = db.Column(db.String(100), unique=False, nullable=False)
     participant_association = db.relationship('Participant_Activity_Association', back_populates='activity')
 
-
 @app.route('/', methods = ('GET', 'POST'))
+@set_default_league_id
 def index():
-    # Check if the selected league ID is in session
-    if session.get('selected_league_id') is None:
-        selected_league_id = DEFAULT_LEAGUE_ID
-    
+
+    selected_league_id = session.get('selected_league_id')
+
     # Render the page with the selected league
     # You can retrieve the league data and pass it to the template
     all_leagues = League.query.all()
     selected_league = League.query.get(selected_league_id)
+    # import pdb
+    # pdb.set_trace()
     players = sorted(selected_league.players, key=calculate_player_points, reverse=True)
     return render_template('index.html',  players = players, leagues = all_leagues, selected_league_id=selected_league_id)
-    
+
 @app.route('/select_league/', methods=['POST'])
+@set_default_league_id
 def select_league():
     league_id = request.form.get('league_id')
     session['selected_league_id'] = league_id
     return 'League ID updated successfully'
 
 @app.route('/how_to-score.html')
+@set_default_league_id
 def how_to_score():
     good_activities = Activity.query.filter_by(type = 'good').all()
     bad_activities = Activity.query.filter_by(type = 'bad').all()
     return render_template('how_to_score.html', good_activities = good_activities, bad_activities = bad_activities)
 
 @app.route('/castmembers.html')
+@set_default_league_id
 def castmembers():
     participants = Participant.query.all()
     return render_template('castmembers.html', participants = participants)
 
 @app.route('/get_teams', methods=['GET'])
+@set_default_league_id
 def get_teams():
     selected_league_id = session.get('selected_league_id')
     episode            = int(request.args.get('episode', 0))
@@ -294,8 +312,8 @@ def get_teams():
     else:
         return jsonify({"message" : "No teams found for this episode!"})
 
-
 @app.route('/score_episode/<int:episode>', methods = ('GET', 'POST'))
+@set_default_league_id
 def score_episode(episode):
     selected_league_id = session.get('selected_league_id')
     
@@ -353,6 +371,7 @@ def score_episode(episode):
     return redirect(url_for('score_episode', episode = episode))
 
 @app.route('/select_teams/<int:episode>')
+@set_default_league_id
 def select_teams(episode):
     selected_league_id = session.get('selected_league_id')
     
@@ -371,6 +390,7 @@ def select_teams(episode):
                            )
 
 @app.route('/save_teams', methods=('GET', 'POST'))
+@set_default_league_id
 def save_teams():
     data               = request.get_json()
     episode            = data.get('episode')
@@ -406,8 +426,8 @@ def save_teams():
     updated_data = fetch_updated_data()
     return jsonify(updated_data)
 
-
 @app.route('/fetch_updated_data')
+@set_default_league_id
 def fetch_updated_data():
     # Query the updated data from the database
     # You may need to adjust this based on your actual data retrieval logic
@@ -444,6 +464,7 @@ def fetch_updated_data():
     return updated_data
 
 @app.route('/increment_activity', methods=['POST'])
+@set_default_league_id
 def increment_activity():
     data = request.get_json()
 
@@ -470,13 +491,14 @@ def increment_activity():
     db.session.commit()
     return jsonify({"message": "Updated activities"})
 
-
 @app.template_global()
+@set_default_league_id
 def get_activity_count(participant_id, activity_id):
     return len(Participant_Activity_Association.query.filter_by(participant_id = participant_id, activity_id = activity_id).all())
 
 
 @app.template_global()
+@set_default_league_id
 def calculate_participant_points(participant, type, episode = None):
         '''Calculates how many points a participant has earned.
 
@@ -498,7 +520,7 @@ def calculate_participant_points(participant, type, episode = None):
         return total_pts
 
 # This decorator allows us to use this function in a template
-@app.template_global()
+@set_default_league_id
 def calculate_team_points(team):
     '''Calculates how many points a team has. It does so by looping through each Participant in the team.'''
     
