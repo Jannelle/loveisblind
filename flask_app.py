@@ -1,7 +1,6 @@
 from codecs import backslashreplace_errors
 import json
 import os
-from sys import activate_stack_trampoline
 from flask import Flask, render_template, request, url_for, redirect, jsonify, session
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey
