@@ -244,17 +244,15 @@ class Activity(db.Model):
 @app.route('/', methods = ('GET', 'POST'))
 def index():
     # Check if the selected league ID is in session
-    selected_league_id = session.get('selected_league_id')
     if selected_league_id is None:
-        # If no league is selected, redirect to the default league
-        return redirect(url_for('select_league', league_id=DEFAULT_LEAGUE_ID))
-    else:
-        # Render the page with the selected league
-        # You can retrieve the league data and pass it to the template
-        all_leagues = League.query.all()
-        selected_league = League.query.get(selected_league_id)
-        players = sorted(selected_league.players, key=calculate_player_points, reverse=True)
-        return render_template('index.html',  players = players, leagues = all_leagues, selected_league_id=selected_league_id)
+        selected_league_id = DEFAULT_LEAGUE_ID
+    
+    # Render the page with the selected league
+    # You can retrieve the league data and pass it to the template
+    all_leagues = League.query.all()
+    selected_league = League.query.get(selected_league_id)
+    players = sorted(selected_league.players, key=calculate_player_points, reverse=True)
+    return render_template('index.html',  players = players, leagues = all_leagues, selected_league_id=selected_league_id)
     
 @app.route('/select_league/', methods=['POST'])
 def select_league():
