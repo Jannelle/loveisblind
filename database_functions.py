@@ -114,66 +114,63 @@ def populate_leagues():
     db.session.commit()
 
 def populate_episode_one_teams():
-
     episode = 1
+    
+    # Define player-team mappings for the friends league
+    friends_league_player_mappings = [
+        ("UC",        "Kenneth",   "Danette",    "Nolan"    ),
+        ("Katie",     "Drake",     "Amy",        "Ben"      ),
+        ("Marc",      "Matthew",   "Amy C.",     "Brittany" ),
+        ("Jannelle",  "Ariel",     "Alejandra",  "Trevor"   ),
+        ("Monica",    "Clay",      "Sunni",      "Ashley"   )
+    ]
 
-    #### UC ####
-    uc             = Player.query.filter_by(name = 'UC').one()
-    uc_team        = Team(episode = episode)
-    db.session.add(uc_team)
+    
+    # Iterate over player-team mappings for the friends league
+    for player_name, man_name, woman_name, bear_name in friends_league_player_mappings:
+        # Get player object
+        player = Player.query.filter_by(name=player_name).first()
+        
+        # Get participant IDs
+        man_id   = Participant.query.filter_by(name=man_name).first().id
+        woman_id = Participant.query.filter_by(name=woman_name).first().id
+        bear_id  = Participant.query.filter_by(name=bear_name).first().id
+        
+        # Create or update team for the player
+        Team.create_or_update_team(player.id, episode, man_id, woman_id, bear_id)
+        
+        # Append the player to the friends league
+        friends_league = League.query.filter_by(name='friends').one()
+        friends_league.players.append(player)
 
-    uc_team.man    = Participant.query.filter_by(name ='Kenneth').one()
-    uc_team.woman  = Participant.query.filter_by(name ='Danette').one()
-    uc_team.bear   = Participant.query.filter_by(name ='Nolan'  ).one()
-    uc.teams.append(uc_team)
-
-    #### Katie ####
-    katie             = Player.query.filter_by(name = 'Katie').one()
-    katie_team        = Team(episode = episode)
-    db.session.add(katie_team)
-
-    katie_team.man    = Participant.query.filter_by(name = 'Drake').one()
-    katie_team.woman  = Participant.query.filter_by(name = 'Amy'  ).one()
-    katie_team.bear   = Participant.query.filter_by(name = 'Ben'  ).one()
-    katie.teams.append(katie_team)
-
-
-    #### Marc ####
-    marc             = Player.query.filter_by(name = 'Marc').one()
-    marc_team        = Team(episode = episode)
-    db.session.add(marc_team)
-
-    marc_team.man    = Participant.query.filter_by(name = 'Matthew' ).one()
-    marc_team.woman  = Participant.query.filter_by(name = 'Amy C.'  ).one()
-    marc_team.bear   = Participant.query.filter_by(name = 'Brittany').one()
-    marc.teams.append(marc_team)
-
-
-    #### Jannelle ####
-    jannelle             = Player.query.filter_by(name = 'Jannelle').one()
-    jannelle_team        = Team(episode = episode)
-    db.session.add(jannelle_team)
-
-    jannelle_team.man    = Participant.query.filter_by(name = 'Ariel'    ).one()
-    jannelle_team.woman  = Participant.query.filter_by(name = 'Alejandra').one()
-    jannelle_team.bear   = Participant.query.filter_by(name = 'Trevor'   ).one()
-    jannelle.teams.append(jannelle_team)
-
-
-    #### Monica ####
-    monica             = Player.query.filter_by(name = 'Monica').one()
-    monica_team        = Team(episode = episode)
-    db.session.add(monica_team)
-
-    monica_team.man    = Participant.query.filter_by(name = 'Clay'  ).one()
-    monica_team.woman  = Participant.query.filter_by(name = 'Sunni' ).one()
-    monica_team.bear   = Participant.query.filter_by(name = 'Ashley').one()
-    monica.teams.append(monica_team)
-
-    league = League.query.filter_by(name = 'friends').one()
-    for participant in [uc, katie, marc, jannelle, monica]:
-        league.players.append(participant)
+    # Define player-team mappings for the family league
+    family_league_player_mappings = [
+        ("Jawknee",   "Nolan",     "Chelsea",   "Vince"     ),
+        ("Jayden",    "Jamal",     "Amy C.",    "Austin"    ),
+        ("Jeannette", "Jimmy",     "Amy",       "Sunni"     ),
+        ("John Jr.",  "Kenneth",   "Sarah Ann", "Nolan"     ),
+        ("Michelle",  "Vince",     "Brittany",  "AD"        ),
+        ("Jannelle",  "Johnny",    "Jessica",   "Danette"   ),
+        ("Monica",    "AD",        "Deion",     "Alejandra" ),
+        ("Marc",      "Mackenzie", "Matthew",   "Laura"     ),
+    ]
+    
+    # Iterate over player-team mappings for the family league
+    for player_name, man_name, woman_name, bear_name in family_league_player_mappings:
+        # Create player object
+        new_player = Player(name=player_name)
+        db.session.add(new_player)
+        
+        # Get participant IDs
+        man_id = Participant.query.filter_by(name=man_name).first().id
+        woman_id = Participant.query.filter_by(name=woman_name).first().id
+        bear_id = Participant.query.filter_by(name=bear_name).first().id
+        
+        # Create or update team for the player
+        Team.create_or_update_team(new_player.id, episode, man_id, woman_id, bear_id)
+        
+        # Append the player to the family league
+        family_league = League.query.filter_by(name='family').one()
+        family_league.players.append(new_player)
 
     db.session.commit()
-
-reset_db()

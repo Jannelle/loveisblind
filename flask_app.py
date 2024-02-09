@@ -55,6 +55,9 @@ class Player(db.Model):
     viewings  = db.relationship('Viewing', secondary=viewing_player_association, back_populates='players')
     league    = db.relationship("League", lazy=True, back_populates="players")
 
+    def __repr__(self):
+        return f"id: {self.id}\nname: {self.name}\nleague_name: {self.league.name}\n\n"
+
 class Viewing(db.Model):
     __tablename__ = 'Viewing'
     id        = db.Column(db.Integer, primary_key=True)
@@ -175,6 +178,33 @@ class Team(db.Model):
                            uselist=False
                            )
     
+
+    @staticmethod
+    def get_team_for_player_and_episode(player_id, episode):
+        return Team.query.filter_by(owner_id=player_id, episode=episode).first()
+
+    @staticmethod
+    def create_or_update_team(player_id, episode, man_id, woman_id, bear_id):
+        existing_team = Team.get_team_for_player_and_episode(player_id, episode)
+        if existing_team:
+            # Update the existing team
+            existing_team.man_id   = man_id
+            existing_team.woman_id = woman_id
+            existing_team.bear_id  = bear_id
+            
+        else:
+            # Create a new team
+            new_team = Team(
+                owner_id=player_id,
+                episode=episode,
+                man_id=man_id,
+                woman_id=woman_id,
+                bear_id=bear_id
+            )
+            db.session.add(new_team)
+
+        db.session.commit()
+
     @property
     def attended_viewing(self):
         return any(viewing.episode == self.episode for viewing in self.owner.viewings)
@@ -187,7 +217,8 @@ class Team(db.Model):
             team_dict['woman'] = self.woman.name
         if self.bear:
             team_dict['bear'] = self.bear.name
-        return team_dict
+        return str(team_dict)
+    
 
 class Activity(db.Model):
     '''
@@ -225,12 +256,11 @@ def index():
         players = sorted(selected_league.players, key=calculate_player_points, reverse=True)
         return render_template('index.html',  players = players, leagues = all_leagues, selected_league_id=selected_league_id)
     
-@app.route('/select_league/<int:league_id>', methods=['GET'])
-def select_league(league_id):
-    # Store the selected league ID in session
+@app.route('/select_league/', methods=['POST'])
+def select_league():
+    league_id = request.form.get('league_id')
     session['selected_league_id'] = league_id
-    # Redirect to the desired page or route
-    return redirect(url_for('index'))    
+    return 'League ID updated successfully'
 
 @app.route('/how_to-score.html')
 def how_to_score():
@@ -342,52 +372,42 @@ def select_teams(episode):
                            , episode      = episode
                            )
 
-@app.route('/save_teams', methods = ('GET', 'POST'))
+@app.route('/save_teams', methods=('GET', 'POST'))
 def save_teams():
-
-    data = request.get_json()
-    episode = data.get('episode')
-    teams_to_parse = data.get('teams')
-    selected_league_id = session.get('league_id')
-
-    # Select the IDs of the teams to delete
-    team_ids_to_delete = Team.query \
-        .filter_by(episode=episode) \
-        .join(Player) \
-        .filter(Player.league_id == selected_league_id) \
-        .with_entities(Team.id) \
-        .all()
-
-    # Extract the IDs from the result
-    team_ids = [id for id, in team_ids_to_delete]
-
-    # Perform the deletion
-    Team.query.filter(Team.id.in_(team_ids)).delete(synchronize_session=False)
-
+    data               = request.get_json()
+    episode            = data.get('episode')
+    teams_to_parse     = data.get('teams')
+    selected_league_id = session.get('selected_league_id')
 
     for team_to_parse in teams_to_parse:
-        player = Player.query.filter_by(name = team_to_parse['name']).first()
-        team   = Team(episode = episode)
-        player.teams.append(team)
-
-        for participant_item in team_to_parse['participants']:
-            name        = participant_item['name']
-            origin_list = participant_item['origin_list']
-            participant = Participant.query.filter_by(name = name).first()
+        player_name = team_to_parse['name']
+        player      = Player.query.filter_by(name = player_name, league_id = session.get('selected_league_id')).one()
+        for team_member in team_to_parse['participants']:
+            name        = team_member['name']
+            origin_list = team_member['origin_list']
+            participant_id = Participant.query.filter_by(name = name).first().id
             if   origin_list == 'menList':
-                team.man   = participant
+                man_id   = participant_id
             elif origin_list == 'womenList':
-                team.woman = participant
+                woman_id = participant_id
             elif origin_list == 'badNewsBearsList':
-                team.bear   = participant
+                bear_id   = participant_id
             else:
-                print('!!!!!')
-                print(origin_list)
+                raise ValueError(f"Bad origin_list {origin_list}")
+        
+        
+        Team.create_or_update_team(player_id  = player.id
+                                   , episode  = episode
+                                   , man_id   = man_id
+                                   , woman_id = woman_id
+                                   , bear_id  = bear_id
+                                   )
 
-        db.session.commit()
+    db.session.commit()
 
     updated_data = fetch_updated_data()
     return jsonify(updated_data)
+
 
 @app.route('/fetch_updated_data')
 def fetch_updated_data():
@@ -395,8 +415,6 @@ def fetch_updated_data():
     # You may need to adjust this based on your actual data retrieval logic
     selected_league = League.query.get(session.get('selected_league_id'))
     players = selected_league.players
-    # ... (any other data you need)
-
     # Convert data to a dictionary or list that can be easily converted to JSON
     updated_data = {
         'players': [

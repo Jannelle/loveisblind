@@ -138,15 +138,13 @@
     </header>
     <nav style="display: flex; align-items: center;">
         
-        <form method="get" id="leagueForm" style="margin-right: 50px; margin-left: 50px">
-            <label for="leagueSelect">Select League:</label>
-            <select id="leagueSelect" name="league" onchange="updateActionLeague()">
-                <option value="" selected disabled>Select a League</option>
-                {% for league in leagues %}
-                    <option value="{{ league.id }}">{{ league.name }}</option>
-                {% endfor %}
-            </select>
-        </form>
+        <label for="leagueSelect">Select League:</label>
+        <select id="leagueSelect" name="league">
+            <option value="" selected disabled>Select a League</option>
+            {% for league in leagues %}
+                <option value="{{ league.id }}">{{ league.name }}</option>
+            {% endfor %}
+        </select>
 
         <a href="{{ url_for('index') }}" >Current scores</a>
 
@@ -200,24 +198,6 @@
             
         }
 
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     var resetButton = document.getElementById('resetButton');
-
-        //     resetButton.addEventListener('click', function() {
-        //         // Make an AJAX request to the backend when the button is clicked
-        //         fetch('/reset_db', {
-        //             method: 'POST',
-        //             headers: {
-        //                 'Content-Type': 'application/json'
-        //             },
-                    
-        //         });
-        //         window.location.replace("/");
-                
-
-
-        //     });
-
         // Retrieve the selected episode from the URL
         var new_url         = window.location.pathname.split('/')
         var new_url_episode = new_url.pop()
@@ -234,7 +214,50 @@
             }
             
         }
-        // });
+    </script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script>
+        // Function to handle league selection change
+        function handleLeagueChange() {
+            var selectedLeagueId = $('#leagueSelect').val();
+    
+            // Store the selected league ID in localStorage
+            localStorage.setItem('selectedLeagueId', selectedLeagueId);
+    
+            // Get the current league ID from localStorage
+            var currentLeagueId = localStorage.getItem('currentLeagueId');
+    
+            // Check if the selected league is different from the current league
+            if (selectedLeagueId !== currentLeagueId) {
+                // Send AJAX request to update selected league ID
+                $.ajax({
+                    url: '/select_league',
+                    method: 'POST',
+                    data: { league_id: selectedLeagueId },
+                    success: function(response) {
+                        console.log('League ID updated successfully');
+                        // Store the selected league as the current league
+                        localStorage.setItem('currentLeagueId', selectedLeagueId);
+                        // Reload the page after updating the league ID
+                        window.location.reload();
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error updating league ID:', error);
+                        // Handle error
+                    }
+                });
+            }
+        }
+    
+        // Event listener for league selection change
+        $('#leagueSelect').change(handleLeagueChange);
+    
+        // Check if there's a selected league stored in localStorage
+        var selectedLeagueId = localStorage.getItem('selectedLeagueId');
+        if (selectedLeagueId) {
+            // Set the selected league in the dropdown
+            $('#leagueSelect').val(selectedLeagueId);
+        }
     </script>
     <hr>
     <div class="content">
