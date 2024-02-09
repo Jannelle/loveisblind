@@ -244,7 +244,7 @@ class Activity(db.Model):
 @app.route('/', methods = ('GET', 'POST'))
 def index():
     # Check if the selected league ID is in session
-    if selected_league_id is None:
+    if session.get('selected_league_id') is None:
         selected_league_id = DEFAULT_LEAGUE_ID
     
     # Render the page with the selected league
