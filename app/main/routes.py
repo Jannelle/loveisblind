@@ -9,7 +9,6 @@ from app.main.template_globals import *
 @bp.route('/', methods = ('GET', 'POST'))
 @set_default_league_id
 def index():
-
     selected_league_id = session.get('selected_league_id')
 
     # Render the page with the selected league
@@ -74,19 +73,19 @@ def score_episode(episode):
         activities = Activity.query.all()
         players    = League.query.filter_by(id = selected_league_id).one().players
 
-        # men   = Participant.query.filter_by(gender = 'male'  ) # Participant.query.join(Team, (Team.man_id   == Participant.id) & (Team.episode == episode))
-        # women = Participant.query.filter_by(gender = 'female') # Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode))
-        # bears = Participant.query.join(Team, (Team.bear_id  == Participant.id)) # Participant.query.join(Team, (Team.bear_id  == Participant.id) & (Team.episode == episode))
-        men   = Participant.query.join(Team, (Team.man_id == Participant.id) & (Team.episode == episode)) \
-                         .join(Player, Player.id == Team.owner_id) \
-                         .filter(Player.league_id == selected_league_id)
+        men   = Participant.query.filter_by(gender = 'male'  ) # Participant.query.join(Team, (Team.man_id   == Participant.id) & (Team.episode == episode))
+        women = Participant.query.filter_by(gender = 'female') # Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode))
+        bears = Participant.query.join(Team, (Team.bear_id  == Participant.id)) # Participant.query.join(Team, (Team.bear_id  == Participant.id) & (Team.episode == episode))
+        # men   = Participant.query.join(Team, (Team.man_id == Participant.id) & (Team.episode == episode)) \
+        #                  .join(Player, Player.id == Team.owner_id) \
+        #                  .filter(Player.league_id == selected_league_id)
                                        
-        women = Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode)) \
-                         .join(Player, Player.id == Team.owner_id) \
-                         .filter(Player.league_id == selected_league_id)
-        bears = Participant.query.join(Team, (Team.bear_id == Participant.id) & (Team.episode == episode)) \
-                         .join(Player, Player.id == Team.owner_id) \
-                         .filter(Player.league_id == selected_league_id)
+        # women = Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode)) \
+        #                  .join(Player, Player.id == Team.owner_id) \
+        #                  .filter(Player.league_id == selected_league_id)
+        # bears = Participant.query.join(Team, (Team.bear_id == Participant.id) & (Team.episode == episode)) \
+        #                  .join(Player, Player.id == Team.owner_id) \
+        #                  .filter(Player.league_id == selected_league_id)
 
         roles_dict = {
             'Men'            : men,

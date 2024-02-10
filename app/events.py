@@ -4,9 +4,6 @@ from app.models.league import *
 
 from .extensions import socketio, db
 
-
-users = {}
-
 @socketio.on("connect")
 def handle_connect():
     print("Client connected!")
@@ -14,9 +11,6 @@ def handle_connect():
 
 @socketio.on('activity_updated')
 def handle_activity_update(data):
-    print('clicked button')
-    print('clicked button')
-    print('clicked button')
     participant_id = data.get('participant_id')
     activity_id    = data.get('activity_id')
     episode        = data.get('episode')
@@ -41,17 +35,3 @@ def handle_activity_update(data):
     
     # Emit a SocketIO event to notify all clients about the activity update
     emit('update_activity_count', data, broadcast=True)
-
-@socketio.on("user_join")
-def handle_user_join(username):
-    print(f"User {username} joined!")
-    users[username] = request.sid
-
-@socketio.on("new_message")
-def handle_new_message(message):
-    print(f"New message: {message}")
-    username = None 
-    for user in users:
-        if users[user] == request.sid:
-            username = user
-    emit("chat", {"message": message, "username": username}, broadcast=True)
