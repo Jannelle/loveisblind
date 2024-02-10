@@ -6,10 +6,6 @@ DEFAULT_LEAGUE_ID = 1
 
 class Config:
     SECRET_KEY =os.environ.get('SECRET_KEY')
-    print(SECRET_KEY)
-    print(SECRET_KEY)
-    print(SECRET_KEY)
-    print(SECRET_KEY)
-    
+    DEBUG = True
     SQLALCHEMY_DATABASE_URI = 'sqlite:///' + os.path.join(basedir, 'database.db')
     SQLALCHEMY_TRACK_MODIFICATIONS = False

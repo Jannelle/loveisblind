@@ -1,2 +1,2 @@
-from database_functions import *
+from resetting_functions import *
 reset_db()
