@@ -1,5 +1,5 @@
 from sys import path_importer_cache
-from flask_app import *
+from app import *
 
 
 def reset_db():
