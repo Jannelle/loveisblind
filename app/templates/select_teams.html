@@ -13,7 +13,7 @@
                     <h2>Men</h2>
                     <select id="menList" size="15" style="width: 200px;">
                         {% for man in men %}
-                            <option value="{{ man.name }}">{{ man.name }}</option>
+                            <option value="{{ man.name }}" style="background-color:rgb(93, 212, 99)">{{ man.name }}</option>
                         {% endfor %}
                     </select>
                 </td>
@@ -21,7 +21,7 @@
                     <h2>Women</h2>
                     <select id="womenList" size="15" style="width: 200px;">
                         {% for woman in women %}
-                            <option value="{{ woman.name }}">{{ woman.name }}</option>
+                            <option value="{{ woman.name }}" style="background-color:rgb(236, 236, 192)" >{{ woman.name }}</option>
                         {% endfor %}
                     </select>
                 </td>
@@ -29,7 +29,7 @@
                     <h2>Bad News Bears</h2>
                     <select id="badNewsBearsList" size="15" style="width: 200px;">
                         {% for bear in participants %}
-                            <option value="{{ bear.name }}">{{ bear.name }}</option>
+                            <option value="{{ bear.name }}" style="background-color:crimson" >{{ bear.name }}</option>
                         {% endfor %}
                     </select>
                 </td>
@@ -118,8 +118,11 @@ function populateTeams() {
             showConfirmationMessage('Teams copied successfully!');
         })
         .catch((error) => {
-            console.error('Error:', error);
-            showErrorMessage('Error copying teams. Please try again.');
+            console.log(copyFromEpisode.value)
+            if (copyFromEpisode.value !== "") {
+                console.error('Error:', error);
+                showErrorMessage('Error copying teams. Please try again.');
+            }
         });
 };
 
@@ -158,14 +161,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
         for (var i = 0; i < 3; i++) {
             var participantList = participant_lists[i];
-            var selectedParticipant = participantList.value;
-
-            if (selectedParticipant !== '') {
+            var selectedOption =  participantList.options[participantList.selectedIndex];
+ 
+            if (typeof selectedOption !== 'undefined') {
                 var oldListName = participantList.id;
                 var option = document.createElement('option');
-                option.text = selectedParticipant
+                option.text = selectedOption.value;
                 option.value = option.text;
-                option.dataset.oldListName = oldListName
+                option.style.backgroundColor = selectedOption.style.backgroundColor;
+                option.dataset.oldListName = oldListName;
+
                 teamList.add(option);
             }
 
@@ -178,13 +183,15 @@ document.addEventListener('DOMContentLoaded', function () {
         };
     }
 
+    // Loop for adkding participants to a team if the corresponding button is clicked
     for (var i = 0; i < teamButtons.length; i++) {
         teamButtons[i].addEventListener('click', function () {
             var teamName = this.getAttribute('data-team');
             assignToTeam(teamName);
         });
     }
-
+   
+    // Loop for removinag participants from a team if the corresponding remove button is clicked
     for (var i = 0; i < removeButtons.length; i++) {
         removeButtons[i].addEventListener('click', function () {
             var teamName = this.getAttribute('data-team');
@@ -198,16 +205,21 @@ document.addEventListener('DOMContentLoaded', function () {
             var option = document.createElement('option');
             option.value = selectedParticipant;
             option.text = selectedParticipant;
+            option.style.backgroundColor = selectedOption.style.backgroundColor
 
-            // if (['menList', 'womenList'].includes(oldListName)) {
-            //     oldList.add(option);
-            // }
-            oldList.add(option);
+            var oldOptions = oldList.options; 
+            var insertionIndex = 0;
+            for (var i = 0; i < oldOptions.length; i++) {
+                if (oldOptions[i].text > selectedParticipant) {
+                    break;
+                }
+                insertionIndex++;
+            }
+            oldList.add(option, insertionIndex);
             teamList.remove(teamList.selectedIndex);
         });
     }
 
-    // Your existing JavaScript code
 
     // Add an event listener to the "Save" button
     var saveButton = document.getElementById('saveButton');
@@ -265,8 +277,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var requestData = {
         episode: episode,
         teams: teamsData
-    };
-    console.log(JSON.stringify(requestData));
+    };f
 
     // Send the data to the backend using AJAX
     fetch('/save_teams', {
