@@ -183,14 +183,14 @@ class Team(db.Model):
 
     @staticmethod
     def create_or_update_team(player_id, episode, man_id, woman_id, bear_id):
-         """Create or update a team."""
-         existing_team = Team.get_team_for_player_and_episode(player_id, episode)
-         if existing_team:
+        """Create or update a team."""
+        existing_team = Team.get_team_for_player_and_episode(player_id, episode)
+        if existing_team:
             # Update the existing team
             existing_team.man_id   = man_id
             existing_team.woman_id = woman_id
             existing_team.bear_id  = bear_id
-            else:
+        else:
             # Create a new team
             new_team = Team(
                 owner_id = player_id,
