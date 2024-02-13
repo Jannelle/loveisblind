@@ -252,6 +252,64 @@ def add_or_remove_players():
     return render_template('add_or_remove_players.html', players=players, leagues=leagues)
 
 
+@bp.route('/draft/<int:episode>')
+def draft(episode):
+    selected_league_id = session.get('selected_league_id')
+    
+    participants = Participant.query.order_by(Participant.name).all()
+    men          = Participant.query.filter_by(gender = 'male'  )
+    women        = Participant.query.filter_by(gender = 'female')
+    players      = Player     .query.filter_by(league_id = selected_league_id).order_by(Player.name).all()
+    
+    # men = men.all().query.filter_by(name = 'Ariel')   
+    return render_template('draft.html'
+                           , leagues = League.query.all()
+                           , participants = participants
+                           , men          = men
+                           , women        = women
+                           , players      = players
+                           , episode      = episode
+                           )
+
+
 @bp.route('/test')
 def test():
     return render_template('test.html')
+
+@bp.route('/get_players')
+@set_default_league_id
+def get_players():
+    selected_league_id = session.get('selected_league_id')
+
+    players = Player.query.filter_by(league_id = selected_league_id)
+    player_data = [player.name for player in players]
+    return jsonify(players=player_data)
+
+
+@bp.route('/save_drafted_team', methods=('GET', 'POST'))
+@set_default_league_id
+def save_drafted_team():
+    data               = request.get_json()
+    episode            = data.get('episode')
+    teams_to_parse     = data.get('teams')
+    selected_league_id = session.get('selected_league_id')
+
+    for team_to_parse in teams_to_parse:
+        player_name = team_to_parse['name']
+        player      = Player.query.filter_by(name = player_name, league_id = session.get('selected_league_id')).one()
+        man_id      = Participant.query.filter_by(name = team_to_parse['man'  ]).first().id
+        woman_id    = Participant.query.filter_by(name = team_to_parse['woman']).first().id
+        bear_id     = Participant.query.filter_by(name = team_to_parse['bear' ]).first().id
+        
+        Team.create_or_update_team(player_id  = player.id
+                                   , episode  = episode
+                                   , man_id   = man_id
+                                   , woman_id = woman_id
+                                   , bear_id  = bear_id
+                                   )
+
+    db.session.commit()
+
+    updated_data = fetch_updated_data()
+    print(updated_data)
+    return jsonify(updated_data)

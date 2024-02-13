@@ -1,0 +1,59 @@
+<!-- HTML Template -->
+{% extends 'base.html' %}
+{% block content %}
+<style>
+    .column {
+        flex: 1; /* Each column takes up equal space */
+        padding: 0 10px; /* Optional padding */
+        display: flex;
+        flex-direction: column;
+    }
+</style>
+
+<body>
+    <div id = 'startDraftDiv'>
+    <button id="startDraftButton">Start Draft</button>
+    </div>
+    <div id="draftOrder"></div>
+    <div id="turnIndicator"></div>
+    <div id="errorMessage" style="display: none; color: red;"></div>
+    <div id="participantContainer" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+        <div class="column">
+            {% for man in men %}
+                <div class="participant" data-name="{{ man.name }}" data-role="man">{{ man.name }}</div>
+            {% endfor %}
+        </div>
+        <div class="column">
+            {% for woman in women %}
+                <div class="participant" data-name="{{ woman.name }}" data-role="woman">{{ woman.name }}</div>
+            {% endfor %}        
+        </div>
+        <div class="column">
+            {% for bear in participants %}
+                <div class="participant" data-name="{{ bear.name }}" data-role="bear">{{ bear.name }}</div>
+            {% endfor %}
+        </div>  
+    </div>
+    
+    <div>
+        <h2>Teams</h2>
+        <table>
+            {% for player in players %}
+                <td>
+                    <h3>{{ player.name }}</h3>
+                    <select class="teamList" size="5" style="width: 200px;" data-team="{{ player.name }}"></select>
+                    <button class="teamButton" data-team="{{ player.name }}">Add to {{ player.name }}</button>
+                    <p><button class="removeButton" data-team="{{ player.name }}">Remove from {{ player.name }}</button></p>
+                </td>
+            {% endfor %}
+        </table>
+    </div>
+
+    <button id="undoButton">Undo</button>
+    <script>
+    var episode = "{{ episode }}"
+    </script>
+    <script src="{{ url_for('static', filename='draft.js') }}"></script>
+    
+</body>
+{% endblock %}

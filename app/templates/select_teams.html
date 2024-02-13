@@ -31,7 +31,7 @@
                         {% for bear in participants %}
                             <option value="{{ bear.name }}" style="background-color:crimson" >{{ bear.name }}</option>
                         {% endfor %}
-                    </select>
+                     </select>
                 </td>
                 <td>
 
@@ -56,7 +56,7 @@
                         <h3>{{ player.name }}</h3>
                         <select class="teamList" size="5" style="width: 200px;" data-team="{{ player.name }}"></select>
                         <button class="teamButton" data-team="{{ player.name }}">Add to {{ player.name }}</button>
-                        <button class="removeButton" data-team="{{ player.name }}">Remove from {{ player.name }}</button>
+                        <p><button class="removeButton" data-team="{{ player.name }}">Remove from {{ player.name }}</button></p>
                     </td>
                 {% endfor %}
             </table>
@@ -118,7 +118,6 @@ function populateTeams() {
             showConfirmationMessage('Teams copied successfully!');
         })
         .catch((error) => {
-            console.log(copyFromEpisode.value)
             if (copyFromEpisode.value !== "") {
                 console.error('Error:', error);
                 showErrorMessage('Error copying teams. Please try again.');
@@ -277,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var requestData = {
         episode: episode,
         teams: teamsData
-    };f
+    };
 
     // Send the data to the backend using AJAX
     fetch('/save_teams', {
