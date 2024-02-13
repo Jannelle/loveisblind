@@ -20,7 +20,7 @@ def calculate_team_points(team):
     
     total_points = 0
     
-    # Adding points if Player attended the viewing
+    # Adding points if owner attended the viewing
     if team.attended_viewing:
         total_points += 10
 
@@ -36,10 +36,10 @@ def calculate_team_points(team):
 
 
 @bp.app_template_global()
-def calculate_player_points(player):
-    '''Calculates how many points a player has by looping through all of their teams.'''
+def calculate_owner_points(owner):
+    '''Calculates how many points a owner has by looping through all of their teams.'''
     total_points = 0
-    for team in player.teams.all():
+    for team in owner.teams.all():
         total_points += calculate_team_points(team)
     return total_points
 

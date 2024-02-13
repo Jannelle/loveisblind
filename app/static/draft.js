@@ -1,37 +1,45 @@
 document.addEventListener('DOMContentLoaded', function () {
+
+    var socket = io.connect();
+    
     var teams = {}
     draftOrder = []
     var currentIndex = 0
     var turnIndicator = document.getElementById('turnIndicator');    
     rounds = 0
-
+    var draftOrderDisplay = document.getElementById('draftOrder');
+    var undoButton = document.getElementById('undoButton');
+    
     function startDraft() {
-        rounds += 1
-        // Randomize player order and display the draft order
+        if (rounds !== 0) {
+            resetDraft()
+            return;
+        }
+        
+        rounds++
+
+        // Randomize owner order and display the draft order
         // Update turn indicator to indicate whose turn it is
-        // Make an AJAX request to fetch players data
-        fetch('/get_players')
+        // Make an AJAX request to fetch owners data
+        fetch('/get_owners')
         .then(response => response.json())
         .then(data => {
             // Process the data returned from the server
-            var player_names = data.players;
-            player_names.forEach(function(player) {
-                teams[player] = {
+            var owner_names = data.owners;
+            owner_names.forEach(function(owner) {
+                teams[owner] = {
                     'man': null,
                     'woman': null,
                     'bear': null,
                 };
             });
-            draftOrder = shuffle(player_names);  // Do something with the players data
-
-            var draftOrderDisplay = document.getElementById('draftOrder');
+            draftOrder = shuffle(owner_names);  // Do something with the owners data
             draftOrderDisplay.textContent = 'Draft Order: ' + draftOrder.join(' > ');
             updateTurnIndicator(rounds, draftOrder[currentIndex])
         })
         .catch(error => {
-            console.error('Error fetching players:', error);
+            console.error('Error fetching owners:', error);
         });
-
     }
 
     // Function to shuffle an array (Fisher-Yates algorithm)
@@ -44,38 +52,46 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
     function draftTeamMember(newTeamMemberObject) {
+
+        // This prevents this function from running before StartDraft has been clicked
+        if (rounds === 0) {
+            return;
+        }
+
+        undoButton.disabled = false;
+
         // Add selected participant to the current team
         // Remove that participant from being displayed
         // Go to next person in draft
-        participantName = newTeamMemberObject.textContent
-        role = newTeamMemberObject.dataset.role
+        participantName = newTeamMemberObject.textContent;
+        role = newTeamMemberObject.dataset.role;
+        newTeamMemberObject.style.display = 'none';
 
-        var currentPlayer = draftOrder[currentIndex];
+        var currentowner = draftOrder[currentIndex];
         var teamData = [];
     
         // Validate each team
-        if (teams[currentPlayer][role] !== null) {
-            var otherRoleName = teams[currentPlayer][role];
+        if (teams[currentowner][role] !== null) {
+            var otherRoleName = teams[currentowner][role];
             showErrorMessage('Error! Trying to draft ' + participantName + ' but already have ' + otherRoleName + ' for role ' + role);
             return;
         };
 
         // Add participant to team dictionary
-        teams[currentPlayer][role] = participantName;
+        teams[currentowner][role] = participantName;
 
         // Increment current index. If at the end of the list, reverse the list
         // and start over (snake draft)
-        currentIndex += 1;
+        currentIndex++;
         if (currentIndex === Object.keys(teams).length) {
             draftOrder.reverse();
+            draftOrderDisplay.textContent = 'Draft Order: ' + draftOrder.join(' > ');
             currentIndex = 0;
             rounds += 1;
         }
-        
-        newTeamMemberObject.style.display = 'none';
-    
-        // Add new team member to their player's list
-        var teamList = document.querySelector('.teamList[data-team="' + currentPlayer + '"]');
+
+        // Add new team member to their owner's list
+        var teamList = document.querySelector('.teamList[data-team="' + currentowner + '"]');
         var newOption = document.createElement('option');
         newOption.value = participantName;
         newOption.text = participantName + ' ' + role;
@@ -91,9 +107,43 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Function to handle  ing the last selection
     function undoSelection() {
-        // Undo the last player selection
-        // Update team display
-        // Update turn indicator
+        if (rounds <= 0) {
+            return;
+        }
+
+        // Decrease currentIndex
+        currentIndex--;
+
+        // If a new round was just started
+        if (currentIndex < 0) {
+            rounds--;
+            draftOrder.reverse();
+            draftOrderDisplay.textContent = 'Draft Order: ' + draftOrder.join(' > ');
+            currentIndex = draftOrder.length - 1;
+        }
+
+        lastownerName = draftOrder[currentIndex]
+
+        // Remove the last person they added
+        var teamList = document.querySelector('.teamList[data-team="' + lastownerName + '"]');
+        var lastTeamMember = teamList.lastElementChild;
+        
+
+        var participantContainer = document.getElementById('participantContainer');
+        var participant = participantContainer.querySelector('.participant[data-name="' + lastTeamMember.value + '"][data-role="' + lastTeamMember.dataset.role + '"]');
+        participant.style.display = 'block'; // Re-add the participant to the container
+        
+        teams[lastownerName][lastTeamMember.dataset.role] = null;
+        lastTeamMember.remove();
+
+        updateTurnIndicator(rounds, lastownerName)
+
+        // If we've reached the beginning of the draft
+        if (rounds === 1 && currentIndex === 0) {
+            undoButton.disabled = true;
+            rounds = 1;
+            return;
+        }
     }
 
     // Event listener for the "Start Draft" button
@@ -109,7 +159,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Event listener for the "Undo" button
-    var undoButton = document.getElementById('undoButton');
     undoButton.addEventListener('click', undoSelection);
 
     // Function to show an error message
@@ -125,8 +174,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 8000); // Hide after 3 seconds
     }
 
-    function updateTurnIndicator(roundNumber, currentPlayerName) {
-        turnIndicator.textContent = 'Round ' + roundNumber + '!\n' + currentPlayerName
+    function updateTurnIndicator(roundNumber, currentownerName) {
+        turnIndicator.textContent = 'Round ' + roundNumber + '!\n' + currentownerName
     }
 
     function endDraft () {
@@ -173,30 +222,103 @@ document.addEventListener('DOMContentLoaded', function () {
         
             teamsData.push(newTeamData);
         }
-
+        console.log(episode);
         // Include the "episode" variable in the JSON data
         var requestData = {
             episode: episode,
             teams: teamsData
         };
+        console.log(requestData);
 
         // Send the data to the backend using AJAX
         fetch('/save_drafted_team', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData),
-        })
-        .then(response => response.json())
-        .then(data => {
-            console.log('Success:', data);
-            showConfirmationMessage('Data saved successfully!');
-        })
-        .catch((error) => {
-            console.error('Error:', error);
-            showErrorMessage('Error saving data. Please try again.');
-        });
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                showConfirmationMessage('Data saved successfully!');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                showErrorMessage('Error saving data. Please try again.');
+            });
     }
+
+    function resetDraft() {
+        // Iterate over each team's list
+        var teamLists = document.querySelectorAll('.teamList');
+        teamLists.forEach(function(teamList) {
+            // Remove all options from the team's list
+            while (teamList.firstChild) {
+                teamList.removeChild(teamList.firstChild);
+            }
+        });
     
+        // Show all hidden participants
+        var hiddenParticipants = document.querySelectorAll('.participant[style="display: none;"]');
+        hiddenParticipants.forEach(function(participant) {
+            participant.style.display = 'block';
+        });
+    
+        // Reset teams object
+        for (var owner in teams) {
+            teams[owner] = {
+                'man': null,
+                'woman': null,
+                'bear': null,
+            };
+        }
+    
+        // Reset rounds, currentIndex, and draftOrder
+        rounds = 0;
+        currentIndex = 0;
+        draftOrder = [];
+    
+        startDraft();
+    }
+
+    function populateTeams() {
+        
+        selectedEpisode = episode;
+        
+    
+        // Fetch teams data for the selected episode from the backend
+        fetch('/get_teams?episode=' + selectedEpisode)
+            .then(response => response.json())
+            .then(data => {
+                // Update team lists with the fetched data
+                data.teams.forEach(team => {
+                    var teamList = document.querySelector('.teamList[data-team="' + team.name + '"]');
+                    teamList.innerHTML = '';  // Clear existing options
+    
+                    for (const [role, participant] of Object.entries(team.participants)) {
+                        var option = document.createElement('option');
+                        option.text = participant + ' ' + role;
+                        option.value = participant;
+                        option.dataset.role = role; // Store the role in dataset
+                        teamList.add(option);
+    
+                        // Remove the participant from the corresponding old list
+                        var oldList = document.getElementById(role);
+                        var participantContainer = document.getElementById('participantContainer');
+                        var participantOption = participantContainer.querySelector('.participant[data-name="' + participant + '"][data-role="' + role + '"]');
+                        participantOption.style.display = 'none'; // Re-add the participant to the container
+                }
+            });
+                showErrorMessage('Teams already drafted!');
+                // showConfirmationMessage('Teams copied successfully!');  
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                
+            });
+    };
+
+    
+    populateTeams();
 })

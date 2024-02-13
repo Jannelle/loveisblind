@@ -13,10 +13,12 @@
 <body>
     <div id = 'startDraftDiv'>
     <button id="startDraftButton">Start Draft</button>
+    <button id="undoButton" disabled="true">Undo</button>
     </div>
     <div id="draftOrder"></div>
     <div id="turnIndicator"></div>
     <div id="errorMessage" style="display: none; color: red;"></div>
+    <div id="confirmationMessage" style="display: none; color: green; display: inline-block;"></div>
     <div id="participantContainer" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
         <div class="column">
             {% for man in men %}
@@ -38,21 +40,19 @@
     <div>
         <h2>Teams</h2>
         <table>
-            {% for player in players %}
+            {% for owner in owners %}
                 <td>
-                    <h3>{{ player.name }}</h3>
-                    <select class="teamList" size="5" style="width: 200px;" data-team="{{ player.name }}"></select>
-                    <button class="teamButton" data-team="{{ player.name }}">Add to {{ player.name }}</button>
-                    <p><button class="removeButton" data-team="{{ player.name }}">Remove from {{ player.name }}</button></p>
+                    <h3>{{ owner.name }}</h3>
+                    <select class="teamList" size="5" style="width: 200px;" data-team="{{ owner.name }}"></select>
                 </td>
             {% endfor %}
         </table>
     </div>
 
-    <button id="undoButton">Undo</button>
     <script>
     var episode = "{{ episode }}"
     </script>
+    <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
     <script src="{{ url_for('static', filename='draft.js') }}"></script>
     
 </body>

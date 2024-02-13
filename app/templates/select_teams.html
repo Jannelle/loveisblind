@@ -11,7 +11,7 @@
             <tr>
                 <td>
                     <h2>Men</h2>
-                    <select id="menList" size="15" style="width: 200px;">
+                    <select id="man" size="15" style="width: 200px;">
                         {% for man in men %}
                             <option value="{{ man.name }}" style="background-color:rgb(93, 212, 99)">{{ man.name }}</option>
                         {% endfor %}
@@ -19,7 +19,7 @@
                 </td>
                 <td>
                     <h2>Women</h2>
-                    <select id="womenList" size="15" style="width: 200px;">
+                    <select id="woman" size="15" style="width: 200px;">
                         {% for woman in women %}
                             <option value="{{ woman.name }}" style="background-color:rgb(236, 236, 192)" >{{ woman.name }}</option>
                         {% endfor %}
@@ -27,7 +27,7 @@
                 </td>
                 <td>
                     <h2>Bad News Bears</h2>
-                    <select id="badNewsBearsList" size="15" style="width: 200px;">
+                    <select id="bear" size="15" style="width: 200px;">
                         {% for bear in participants %}
                             <option value="{{ bear.name }}" style="background-color:crimson" >{{ bear.name }}</option>
                         {% endfor %}
@@ -51,12 +51,12 @@
         <div>
             <h2>Teams</h2>
             <table>
-                {% for player in players %}
+                {% for owner in owners %}
                     <td>
-                        <h3>{{ player.name }}</h3>
-                        <select class="teamList" size="5" style="width: 200px;" data-team="{{ player.name }}"></select>
-                        <button class="teamButton" data-team="{{ player.name }}">Add to {{ player.name }}</button>
-                        <p><button class="removeButton" data-team="{{ player.name }}">Remove from {{ player.name }}</button></p>
+                        <h3>{{ owner.name }}</h3>
+                        <select class="teamList" size="5" style="width: 200px;" data-team="{{ owner.name }}"></select>
+                        <button class="teamButton" data-team="{{ owner.name }}">Add to {{ owner.name }}</button>
+                        <p><button class="removeButton" data-team="{{ owner.name }}">Remove from {{ owner.name }}</button></p>
                     </td>
                 {% endfor %}
             </table>
@@ -138,15 +138,15 @@ function showConfirmationMessage(message) {
 };
 
 document.addEventListener('DOMContentLoaded', function () {
-    var menList = document.getElementById('menList');
-    var womenList = document.getElementById('womenList');
-    var badNewsBearsList = document.getElementById('badNewsBearsList');
-    var participant_lists = [menList, womenList, badNewsBearsList];
+    var man = document.getElementById('man');
+    var woman = document.getElementById('woman');
+    var bear = document.getElementById('bear');
+    var participant_lists = [man, woman, bear];
     var teamButtons = document.getElementsByClassName('teamButton');
     var teamLists = document.getElementsByClassName('teamList');
     var removeButtons = document.getElementsByClassName('removeButton');
 
-    var listsToDeselect = [menList, womenList, badNewsBearsList]
+    var listsToDeselect = [man, woman, bear]
 
     for (var i = 0; i < listsToDeselect.length; i++) {
         listsToDeselect[i].addEventListener('click', function () {
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // // If it's not BadNewsBears, remove from the participant list
-            // if (participantList !== badNewsBearsList) {
+            // if (participantList !== bear) {
             //     participantList.remove(participantList.selectedIndex);
             // }
             participantList.remove(participantList.selectedIndex);
@@ -241,20 +241,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Validate each team
-        var manCount = participants.filter(participant => participant.origin_list === 'menList').length;
-        var womanCount = participants.filter(participant => participant.origin_list === 'womenList').length;
-        var bearCount = participants.filter(participant => participant.origin_list === 'badNewsBearsList').length;
+        var manCount = participants.filter(participant => participant.origin_list === 'man').length;
+        var womanCount = participants.filter(participant => participant.origin_list === 'woman').length;
+        var bearCount = participants.filter(participant => participant.origin_list === 'bear').length;
 
         if (manCount !== 1) {
-            var men = participants.filter(participant => participant.origin_list === 'menList').map(participant => participant.name).join(', ');
+            var men = participants.filter(participant => participant.origin_list === 'man').map(participant => participant.name).join(', ');
             errors.push('Team ' + teamName + ' has ' + manCount + ' men: ' + men);
         }
         if (womanCount !== 1) {
-            var women = participants.filter(participant => participant.origin_list === 'womenList').map(participant => participant.name).join(', ');
+            var women = participants.filter(participant => participant.origin_list === 'woman').map(participant => participant.name).join(', ');
             errors.push('Team ' + teamName + ' has ' + womanCount + ' women: ' + women);
         }
         if (bearCount !== 1) {
-            var bears = participants.filter(participant => participant.origin_list === 'badNewsBearsList').map(participant => participant.name).join(', ');
+            var bears = participants.filter(participant => participant.origin_list === 'bear').map(participant => participant.name).join(', ');
             errors.push('Team ' + teamName + ' has ' + bearCount + ' Bad News Bears: ' + bears);
         }
 

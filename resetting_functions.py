@@ -1,6 +1,6 @@
 from sys import path_importer_cache
 from app import *
-
+from app.models.league import *
 
 def reset_db():
     '''Resets the db and repopulates the tables.
@@ -97,14 +97,14 @@ def populate_participants():
 
 
 def process_league_data(league_data, league_name, episode):
-    for player_name, team_members in league_data.items():
+    for owner_name, team_members in league_data.items():
         league = League.query.filter_by(name=league_name).one()
 
-        # Get player object or create new one
-        # player = Player.query.filter_by(name=player_name, league_id=league.id).one()
-        # if not player:
-        player = Player(name=player_name, league_id=league.id)
-        db.session.add(player)
+        # Get owner object or create new one
+        # owner = owner.query.filter_by(name=owner_name, league_id=league.id).one()
+        # if not owner:
+        owner = Owner(name=owner_name, league_id=league.id)
+        db.session.add(owner)
         # Get participant IDs
         # print(team_members['Man'])
         # import pdb
@@ -113,17 +113,17 @@ def process_league_data(league_data, league_name, episode):
         woman_id = Participant.query.filter_by(name=team_members['Woman'])      .first().id
         bear_id  = Participant.query.filter_by(name=team_members['BadNewsBear']).first().id
         
-        # Create or update team for the player
-        Team.create_or_update_team(player.id, episode, man_id, woman_id, bear_id)
+        # Create or update team for the owner
+        Team.create_or_update_team(owner.id, episode, man_id, woman_id, bear_id)
         
-        # Append the player to the league
+        # Append the owner to the league
         
-        league.players.append(player)
+        league.owners.append(owner)
 
 def populate_episode_one_teams():
     episode = 1
     
-    # Define player-team mappings for the friends league
+    # Define owner-team mappings for the friends league
     friends_league_data = {
         "UC": {
             "Man"         : "Kenneth",
@@ -152,7 +152,7 @@ def populate_episode_one_teams():
         }
     }
 
-    # Define player-team mappings for the family league
+    # Define owner-team mappings for the family league
     family_league_data = {
         "Jawknee": {
             "Man"         : "Nolan",

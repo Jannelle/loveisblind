@@ -1,0 +1,55 @@
+
+{% extends 'base.html' %}
+
+{% block content %}
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+<h1 class="title">{% block title %} Total Scores by Cast member {% endblock %}</h1>
+<body>
+<table id="participant-table" class="styled-table">
+    <thead>
+        <tr class="styled-table">
+            <th></th>
+            <th>Participant</th>
+            <th>Gender</th>
+            <th>Good points</th>
+            <th>Bad News Bear points</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for participant in participants %}            
+            <tr>
+                <td class="c1">{{ participant.id }}</td>
+                <td class="c2">{{ participant.name }}</td>
+                <td class="c2">{{ participant.gender }}</td>
+                <td class="c3">{{ calculate_participant_points(participant, "good") }}</td>
+                <td class="c4">{{ calculate_participant_points(participant, "bad") }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+<style>
+    #participant-table_wrapper {
+        width: 50%; /* Adjust the width as needed */
+        margin: 0 auto; /* Center the table horizontally */
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('#participant-table').DataTable({
+            columnDefs: [
+                { width: '5%', targets: 0 }, // Adjust the width and target column index as needed
+                { width: '20%', targets: 1 },
+                { width: '10%', targets: 2 },
+                { width: '10%', targets: 3 },
+                { width: '10%', targets: 4 }
+            ],
+            pageLength: 30 // Display 25 rows per page
+
+        });
+    });
+</script>
+</body>
+{% endblock %}

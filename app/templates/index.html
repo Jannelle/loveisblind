@@ -5,13 +5,13 @@
 {% block content %}
 <body>
     <div class="content">
-    {% for player in players %}
+    {% for owner in owners %}
     <div class="data-square">
-        <div class="player-info">
-            <b><p>{{ player.name }}</p></b>
-            <p>Total Score: <b><span id="total-score-{{ player.id }}">{{ calculate_player_points(player) }}</span></b></p>
+        <div class="owner-info">
+            <b><p>{{ owner.name }}</p></b>
+            <p>Total Score: <b><span id="total-score-{{ owner.id }}">{{ calculate_owner_points(owner) }}</span></b></p>
         </div>
-        {% for team in player.teams.all() %}
+        {% for team in owner.teams.all() %}
         <div class="episode-info" id="team-{{ team.id }}">
             <table style="width: 100%; text-align: center; background-color: darkblue; color: white;    ">
                 <tr><td>
@@ -42,16 +42,16 @@
         fetch('/fetch_updated_data')
             .then(response => response.json())
             .then(data => {
-                data.players.forEach(player => {
-                    const playerID = player.id;
-                    const totalScoreElement = document.getElementById('total-score-' + playerID);
+                data.owners.forEach(owner => {
+                    const ownerID = owner.id;
+                    const totalScoreElement = document.getElementById('total-score-' + ownerID);
                     if (totalScoreElement) {
-                        totalScoreElement.innerText = player.total_score;
+                        totalScoreElement.innerText = owner.total_score;
                     } else {
-                        console.error('Total score element not found for player ID:', playerID);
+                        console.error('Total score element not found for owner ID:', ownerID);
                     }
                     // Update the episode scores
-                    player.teams.forEach(team => {
+                    owner.teams.forEach(team => {
                         const teamID = team.id;
                         document.getElementById('man-'             + teamID).innerText = team.man;
                         document.getElementById('woman-'           + teamID).innerText = team.woman;

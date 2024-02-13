@@ -17,8 +17,8 @@ def index():
     selected_league = League.query.get(selected_league_id)
     # import pdb
     # pdb.set_trace()
-    players = sorted(selected_league.players, key=calculate_player_points, reverse=True)
-    return render_template('index.html',  players = players, leagues = all_leagues, selected_league_id=selected_league_id)
+    owners = sorted(selected_league.owners, key=calculate_owner_points, reverse=True)
+    return render_template('index.html',  owners = owners, leagues = all_leagues, selected_league_id=selected_league_id)
 
 @bp.route('/select_league/', methods=['POST'])
 @set_default_league_id
@@ -34,18 +34,18 @@ def how_to_score():
     bad_activities = Activity.query.filter_by(type = 'bad').all()
     return render_template('how_to_score.html', good_activities = good_activities, bad_activities = bad_activities)
 
-@bp.route('/castmembers.html')
+@bp.route('/all_castmembers_scores.html')
 @set_default_league_id
-def castmembers():
+def all_castmembers_scores():
     participants = Participant.query.all()
-    return render_template('castmembers.html', participants = participants)
+    return render_template('all_castmembers_scores.html', participants = participants)
 
 @bp.route('/get_teams', methods=['GET'])
 @set_default_league_id
 def get_teams():
     selected_league_id = session.get('selected_league_id')
     episode            = int(request.args.get('episode', 0))
-    teams              = Team.query.filter_by(episode = episode).join(Player).filter(Player.league_id == selected_league_id).all()
+    teams              = Team.query.filter_by(episode = episode).join(Owner).filter(Owner.league_id == selected_league_id).all()
     
     if len(teams) > 0:
         return jsonify({'teams': 
@@ -71,21 +71,21 @@ def score_episode(episode):
     
     if request.method == 'GET':
         activities = Activity.query.all()
-        players    = League.query.filter_by(id = selected_league_id).one().players
+        owners    = League.query.filter_by(id = selected_league_id).one().owners
 
         men   = Participant.query.filter_by(gender = 'male'  ) # Participant.query.join(Team, (Team.man_id   == Participant.id) & (Team.episode == episode))
         women = Participant.query.filter_by(gender = 'female') # Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode))
         bears = Participant.query.join(Team, (Team.bear_id  == Participant.id)) # Participant.query.join(Team, (Team.bear_id  == Participant.id) & (Team.episode == episode))
         # men   = Participant.query.join(Team, (Team.man_id == Participant.id) & (Team.episode == episode)) \
-        #                  .join(Player, Player.id == Team.owner_id) \
-        #                  .filter(Player.league_id == selected_league_id)
+        #                  .join(owner, owner.id == Team.owner_id) \
+        #                  .filter(owner.league_id == selected_league_id)
                                        
         # women = Participant.query.join(Team, (Team.woman_id == Participant.id) & (Team.episode == episode)) \
-        #                  .join(Player, Player.id == Team.owner_id) \
-        #                  .filter(Player.league_id == selected_league_id)
+        #                  .join(owner, owner.id == Team.owner_id) \
+        #                  .filter(owner.league_id == selected_league_id)
         # bears = Participant.query.join(Team, (Team.bear_id == Participant.id) & (Team.episode == episode)) \
-        #                  .join(Player, Player.id == Team.owner_id) \
-        #                  .filter(Player.league_id == selected_league_id)
+        #                  .join(owner, owner.id == Team.owner_id) \
+        #                  .filter(owner.league_id == selected_league_id)
 
         roles_dict = {
             'Men'            : men,
@@ -95,26 +95,26 @@ def score_episode(episode):
         
         return render_template('score_episode.html'
                             , leagues = League.query.all()
-                            , players = players
+                            , owners = owners
                             , episode    = episode
                             , roles_dict = roles_dict
                             , activities = activities
                             )
     elif request.method == 'POST':
 
-        # Get the list of player IDs from the submitted form
-        attended_players_ids = request.form.getlist('player-checkboxes')
+        # Get the list of owner IDs from the submitted form
+        attended_owners_ids = request.form.getlist('owner-checkboxes')
 
         # Update the database based on the submitted form data
-        for player in Player.query.all():
-            if str(player.id) in attended_players_ids:
-                # Add the viewing for players who attended
-                player.viewings.append(Viewing(episode = episode))
+        for owner in Owner.query.all():
+            if str(owner.id) in attended_owners_ids:
+                # Add the viewing for owners who attended
+                owner.viewings.append(Viewing(episode = episode))
             else:
-                # Remove the viewing for players who did not attend
-                for viewing in player.viewings:
+                # Remove the viewing for owners who did not attend
+                for viewing in owner.viewings:
                     if viewing.episode == episode:
-                        player.viewings.remove(viewing)
+                        owner.viewings.remove(viewing)
 
         # Commit the changes to the database
         db.session.commit()
@@ -130,14 +130,14 @@ def select_teams(episode):
     participants = Participant.query.order_by(Participant.name).all()
     men          = Participant.query.filter_by(gender = 'male'  )
     women        = Participant.query.filter_by(gender = 'female')
-    players      = Player     .query.filter_by(league_id = selected_league_id).order_by(Player.name).all()
+    owners      = Owner     .query.filter_by(league_id = selected_league_id).order_by(Owner.name).all()
     
     return render_template('select_teams.html'
                            , leagues = League.query.all()
                            , participants = participants
                            , men          = men
                            , women        = women
-                           , players      = players
+                           , owners      = owners
                            , episode      = episode
                            )
 
@@ -150,8 +150,8 @@ def save_teams():
     selected_league_id = session.get('selected_league_id')
 
     for team_to_parse in teams_to_parse:
-        player_name = team_to_parse['name']
-        player      = Player.query.filter_by(name = player_name, league_id = session.get('selected_league_id')).one()
+        owner_name = team_to_parse['name']
+        owner      = Owner.query.filter_by(name = owner_name, league_id = session.get('selected_league_id')).one()
         for team_member in team_to_parse['participants']:
             name        = team_member['name']
             origin_list = team_member['origin_list']
@@ -166,7 +166,7 @@ def save_teams():
                 raise ValueError(f"Bad origin_list {origin_list}")
         
         
-        Team.create_or_update_team(player_id  = player.id
+        Team.create_or_update_team(owner_id  = owner.id
                                    , episode  = episode
                                    , man_id   = man_id
                                    , woman_id = woman_id
@@ -184,14 +184,14 @@ def fetch_updated_data():
     # Query the updated data from the database
     # You may need to adjust this based on your actual data retrieval logic
     selected_league = League.query.get(session.get('selected_league_id'))
-    players = selected_league.players
+    owners = selected_league.owners
     # Convert data to a dictionary or list that can be easily converted to JSON
     updated_data = {
-        'players': [
+        'owners': [
             {
-                'name'        : player.name,
-                'id'          : player.id,
-                'total_score' : calculate_player_points(player),
+                'name'        : owner.name,
+                'id'          : owner.id,
+                'total_score' : calculate_owner_points(owner),
                 'teams': [
                     {
                         'id'               : team.id,
@@ -206,50 +206,50 @@ def fetch_updated_data():
                         'attended_viewing' : team.attended_viewing,
                         
                     }
-                    for team in player.teams.all()
+                    for team in owner.teams.all()
                 ]
             }
-            for player in players
+            for owner in owners
         ]
     }
 
     return updated_data
 
 
-@bp.route('/add_player', methods=['POST'])
-def add_player():
+@bp.route('/add_owner', methods=['POST'])
+def add_owner():
     if request.method == 'POST':
         selected_league = League.query.filter_by(name = request.form['league_name']).one().id
-        db.session.add(Player(name = request.form['player_name']))
+        db.session.add(Owner(name = request.form['owner_name']))
         db.session.commit()
 
         # Redirect to a success page or back to the form page
-        return redirect(url_for('.add_or_remove_players'))
+        return redirect(url_for('.add_or_remove_owners'))
     
-@bp.route('/add_or_remove_players', methods=['GET', 'POST'])
-def add_or_remove_players():
+@bp.route('/add_or_remove_owners', methods=['GET', 'POST'])
+def add_or_remove_owners():
     if request.method == 'POST':
-        if 'add_player' in request.form:
-            # Add a new player
-            player_name = request.form['player_name']
+        if 'add_owner' in request.form:
+            # Add a new owner
+            owner_name = request.form['owner_name']
             league_name = request.form['league_name']
             league_id = League.query.filter_by(name = league_name).one().id
-            if player_name:
-                new_player = Player(name = player_name, league_id = league_id)
-                db.session.add(new_player)
+            if owner_name:
+                new_owner = Owner(name = owner_name, league_id = league_id)
+                db.session.add(new_owner)
                 db.session.commit()
-        elif 'remove_player' in request.form:
-            # Remove a player
-            player_id = request.form['player_id']
-            player = Player.query.get(player_id)
-            if player:
-                db.session.delete(player)
+        elif 'remove_owner' in request.form:
+            # Remove a owner
+            owner_id = request.form['owner_id']
+            owner = Owner.query.get(owner_id)
+            if owner:
+                db.session.delete(owner)
                 db.session.commit()
 
-    # Fetch the list of players from the database
-    players = Player.query.all()
+    # Fetch the list of owners from the database
+    owners = Owner.query.all()
     leagues = League.query.all()
-    return render_template('add_or_remove_players.html', players=players, leagues=leagues)
+    return render_template('add_or_remove_owners.html', owners=owners, leagues=leagues)
 
 
 @bp.route('/draft/<int:episode>')
@@ -259,15 +259,15 @@ def draft(episode):
     participants = Participant.query.order_by(Participant.name).all()
     men          = Participant.query.filter_by(gender = 'male'  )
     women        = Participant.query.filter_by(gender = 'female')
-    players      = Player     .query.filter_by(league_id = selected_league_id).order_by(Player.name).all()
+    owners      = Owner     .query.filter_by(league_id = selected_league_id).order_by(Owner.name).all()
     
     # men = men.all().query.filter_by(name = 'Ariel')   
     return render_template('draft.html'
-                           , leagues = League.query.all()
+                           , leagues      = League.query.all()
                            , participants = participants
                            , men          = men
                            , women        = women
-                           , players      = players
+                           , owners      = owners
                            , episode      = episode
                            )
 
@@ -276,14 +276,14 @@ def draft(episode):
 def test():
     return render_template('test.html')
 
-@bp.route('/get_players')
+@bp.route('/get_owners')
 @set_default_league_id
-def get_players():
+def get_owners():
     selected_league_id = session.get('selected_league_id')
 
-    players = Player.query.filter_by(league_id = selected_league_id)
-    player_data = [player.name for player in players]
-    return jsonify(players=player_data)
+    owners = Owner.query.filter_by(league_id = selected_league_id)
+    owner_data = [owner.name for owner in owners]
+    return jsonify(owners=owner_data)
 
 
 @bp.route('/save_drafted_team', methods=('GET', 'POST'))
@@ -293,23 +293,24 @@ def save_drafted_team():
     episode            = data.get('episode')
     teams_to_parse     = data.get('teams')
     selected_league_id = session.get('selected_league_id')
-
+    
     for team_to_parse in teams_to_parse:
-        player_name = team_to_parse['name']
-        player      = Player.query.filter_by(name = player_name, league_id = session.get('selected_league_id')).one()
+        owner_name = team_to_parse['name']
+        owner      = Owner.query.filter_by(name = owner_name, league_id = session.get('selected_league_id')).one()
         man_id      = Participant.query.filter_by(name = team_to_parse['man'  ]).first().id
         woman_id    = Participant.query.filter_by(name = team_to_parse['woman']).first().id
         bear_id     = Participant.query.filter_by(name = team_to_parse['bear' ]).first().id
         
-        Team.create_or_update_team(player_id  = player.id
+        Team.create_or_update_team(owner_id  = owner.id
                                    , episode  = episode
                                    , man_id   = man_id
                                    , woman_id = woman_id
                                    , bear_id  = bear_id
                                    )
 
+
     db.session.commit()
 
     updated_data = fetch_updated_data()
-    print(updated_data)
+
     return jsonify(updated_data)

@@ -9,12 +9,12 @@ class League(db.Model):
     Attributes:
         id   (int) : The unique identifier for the league.
         name (str) : The name of the league.
-        players (relationship): Relationship to Player table.
+        owners (relationship): Relationship to Owner table.
     """    
     __tablename__ = "League"
     id      = db.Column(db.Integer, primary_key=True)
     name    = db.Column(db.String(100), unique=True, nullable=False)
-    players = db.relationship('Player', back_populates='league', uselist=True)
+    owners = db.relationship('Owner', back_populates='league', uselist=True)
 
     # Define league_slug property
     @property
@@ -26,30 +26,30 @@ class League(db.Model):
         slug = re.sub(r'[^a-z0-9-]', '', slug)
         return slug
     
-viewing_player_association = db.Table('viewing_player_association',
+viewing_owner_association = db.Table('viewing_owner_association',
     db.Column('viewing_id', db.Integer, db.ForeignKey('Viewing.id')),
-    db.Column('player_id', db.Integer, db.ForeignKey('Player.id'))
+    db.Column('owner_id', db.Integer, db.ForeignKey('Owner.id'))
 )
 
-class Player(db.Model):
+class Owner(db.Model):
     """
-    Represents a player in the fantasy game.
+    Represents a team owner in the fantasy game.
 
     Attributes:
-        id         (int) : The unique identifier for the player.
-        name       (str) : The name of the player.
+        id         (int) : The unique identifier for the owner.
+        name       (str) : The name of the owner.
         league_id  (int) : The foreign key referencing the League table.
         teams      (relationship) : Relationship to Team table.
-        viewings   (relationship) : Relationship to Viewing table through viewing_player_association table.
+        viewings   (relationship) : Relationship to Viewing table through viewing_owner_association table.
         league     (relationship) : Relationship to League table.
     """
-    __tablename__ = "Player"
+    __tablename__ = "Owner"
     id        = db.Column(db.Integer, primary_key=True)
     name      = db.Column(db.String(100), unique=False, nullable=False)
     league_id = db.Column(db.Integer, db.ForeignKey('League.id'), nullable=False)
     teams     = db.relationship("Team", backref="owner", lazy="dynamic", uselist=True)
-    viewings  = db.relationship('Viewing', secondary=viewing_player_association, back_populates='players')
-    league    = db.relationship("League", lazy=True, back_populates="players")
+    viewings  = db.relationship('Viewing', secondary=viewing_owner_association, back_populates='owners')
+    league    = db.relationship("League", lazy=True, back_populates="owners")
 
     def __repr__(self):
         return f"id: {self.id}\nname: {self.name}\nleague_name: {self.league.name}\n\n"
@@ -61,12 +61,12 @@ class Viewing(db.Model):
     Attributes:
         id      (int) : The unique identifier for the viewing event.
         episode (int) : The episode number associated with the viewing event.
-        players (relationship): Relationship to Player table through viewing_player_association table.
+        owners (relationship): Relationship to Owner table through viewing_owner_association table.
     """    
     __tablename__ = 'Viewing'
     id        = db.Column(db.Integer, primary_key=True)
     episode   = db.Column(db.Integer)
-    players   = db.relationship('Player', secondary=viewing_player_association, back_populates='viewings')
+    owners   = db.relationship('Owner', secondary=viewing_owner_association, back_populates='viewings')
 
 
 class Participant_Activity_Association(db.Model):
@@ -138,7 +138,7 @@ class Team(db.Model):
 
     Attributes:
         id        (int) : The unique identifier for the team.
-        owner_id  (int) : The id of the owner of the team in the Player table.
+        owner_id  (int) : The id of the owner of the team in the Owner table.
         episode   (int) : The episode number that the team was created for.
         man_id    (int) : The foreign key referencing Participant.id for the Man on the team.
         woman_id  (int) : The foreign key referencing Participant.id for the Woman on the team.
@@ -149,7 +149,7 @@ class Team(db.Model):
     """
     __tablename__ = "Team"
     id       = db.Column(db.Integer, primary_key=True)
-    owner_id = db.Column(db.Integer, db.ForeignKey("Player.id"))
+    owner_id = db.Column(db.Integer, db.ForeignKey("Owner.id"))
     episode  = db.Column(db.Integer)
 
     man_id   = db.Column(db.Integer, db.ForeignKey('Participant.id'))
@@ -177,14 +177,14 @@ class Team(db.Model):
     
 
     @staticmethod
-    def get_team_for_player_and_episode(player_id, episode):
-        """Get the team for a player and episode."""
-        return Team.query.filter_by(owner_id=player_id, episode=episode).first()
+    def get_team_for_owner_and_episode(owner_id, episode):
+        """Get the team for a owner and episode."""
+        return Team.query.filter_by(owner_id=owner_id, episode=episode).first()
 
     @staticmethod
-    def create_or_update_team(player_id, episode, man_id, woman_id, bear_id):
+    def create_or_update_team(owner_id, episode, man_id, woman_id, bear_id):
         """Create or update a team."""
-        existing_team = Team.get_team_for_player_and_episode(player_id, episode)
+        existing_team = Team.get_team_for_owner_and_episode(owner_id, episode)
         if existing_team:
             # Update the existing team
             existing_team.man_id   = man_id
@@ -193,7 +193,7 @@ class Team(db.Model):
         else:
             # Create a new team
             new_team = Team(
-                owner_id = player_id,
+                owner_id = owner_id,
                 episode  = episode,
                 man_id   = man_id,
                 woman_id = woman_id,

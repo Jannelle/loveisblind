@@ -10,8 +10,8 @@
     <b>Attendance:</b>
     <form action="/score_episode/{{ episode }}" method="POST">
         <span style="font-size: 14px">
-        {% for player in players %}
-            <input type="checkbox" name="player-checkboxes" value="{{ player.id }}"> {{ player.name }}<br>
+        {% for owner in owners %}
+            <input type="checkbox" name="owner-checkboxes" value="{{ owner.id }}"> {{ owner.name }}<br>
         {% endfor %}
         </span>
         <button type="submit">Submit</button>
