@@ -43,6 +43,7 @@ def get_cached_data(episode):
     # If user selected a different episode, reset cache
     cached_episode = cache.get('episode')
     if cached_episode and (cached_episode != episode):
+        emit('episode_conflict', { 'cached_episode' : cached_episode, 'episode' : episode})
         cache.clear()
     else:
         cache.set('episode', episode)

@@ -3,8 +3,19 @@ document.addEventListener('DOMContentLoaded', function () {
     var socket = io.connect();
 
     // Update data in case the user refreshed but we still have cached data
-    socket.on('connect', function (episode) {
+    socket.on('connect', function () {
         socket.emit('get_cached_data', episode)
+    });
+
+    socket.on('episode_conflict', function (data) {
+        var confirmReset = confirm("There is already a draft session happening for episode " + 
+                                    data.cached_episode + '. You are trying to draft for episode ' + data.episode + '.' +
+                                    ' Do you want to stop the current draft? Cancel to redirect to current draft.')
+        if (confirmReset) {
+            socket.emit('reset_confirmed')
+        } else {
+            window.location.href = "/draft/" + data.cached_episode;
+        }
     });
 
     // ================ Starting Draft ================ //
