@@ -1,5 +1,5 @@
 from flask import Flask
-from app.extensions import db
+from app.extensions import db, cache
 from app.events import socketio
 from config import Config
 
@@ -13,6 +13,8 @@ def create_app(config_class=Config):
 
     # Initialize the SQLAlchemy engine object.
     db.init_app(app)
+
+    cache.init_app(app)
 
     # Register blueprints here
     from app.main import bp as main_bp

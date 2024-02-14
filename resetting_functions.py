@@ -8,7 +8,7 @@ def reset_db():
     db.drop_all()
     db.create_all()
     populate_activities()
-    populate_participants()
+    populate_castmembers()
     populate_leagues()
     populate_episode_one_teams()
     db.session.commit()
@@ -56,43 +56,43 @@ def populate_activities():
         db.session.add(activity)
     db.session.commit()
 
-def populate_participants():
-    participants = [
-        Participant(name = 'AD'       , gender = 'female'),
-        Participant(name = 'Alejandra', gender = 'female'),
-        Participant(name = 'Amber'    , gender = 'female'),
-        Participant(name = 'Amy C.'   , gender = 'female'),
-        Participant(name = 'Amy'      , gender = 'female'),
-        Participant(name = 'Ashley'   , gender = 'female'),
-        Participant(name = 'Brittany' , gender = 'female'),
-        Participant(name = 'Chelsea'  , gender = 'female'),
-        Participant(name = 'Danette'  , gender = 'female'),
-        Participant(name = 'Danielle' , gender = 'female'),
-        Participant(name = 'Jessica'  , gender = 'female'),
-        Participant(name = 'Laura'    , gender = 'female'),
-        Participant(name = 'Mackenzie', gender = 'female'),
-        Participant(name = 'Sarah Ann', gender = 'female'),
-        Participant(name = 'Sunni'    , gender = 'female'),
+def populate_castmembers():
+    castmembers = [
+        Castmember(name = 'AD'       , gender = 'female'),
+        Castmember(name = 'Alejandra', gender = 'female'),
+        Castmember(name = 'Amber'    , gender = 'female'),
+        Castmember(name = 'Amy C.'   , gender = 'female'),
+        Castmember(name = 'Amy'      , gender = 'female'),
+        Castmember(name = 'Ashley'   , gender = 'female'),
+        Castmember(name = 'Brittany' , gender = 'female'),
+        Castmember(name = 'Chelsea'  , gender = 'female'),
+        Castmember(name = 'Danette'  , gender = 'female'),
+        Castmember(name = 'Danielle' , gender = 'female'),
+        Castmember(name = 'Jessica'  , gender = 'female'),
+        Castmember(name = 'Laura'    , gender = 'female'),
+        Castmember(name = 'Mackenzie', gender = 'female'),
+        Castmember(name = 'Sarah Ann', gender = 'female'),
+        Castmember(name = 'Sunni'    , gender = 'female'),
 
-        Participant(name = 'Ariel'   , gender = 'male'),
-        Participant(name = 'Austin'  , gender = 'male'),
-        Participant(name = 'Ben'     , gender = 'male'),
-        Participant(name = 'Clay'    , gender = 'male'),
-        Participant(name = 'Deion'   , gender = 'male'),
-        Participant(name = 'Drake'   , gender = 'male'),
-        Participant(name = 'Jamal'   , gender = 'male'),
-        Participant(name = 'Jeramey' , gender = 'male'),
-        Participant(name = 'Jimmy'   , gender = 'male'),
-        Participant(name = 'Johnny'  , gender = 'male'),
-        Participant(name = 'Kenneth' , gender = 'male'),
-        Participant(name = 'Matthew' , gender = 'male'),
-        Participant(name = 'Nolan'   , gender = 'male'),
-        Participant(name = 'Trevor'  , gender = 'male'),
-        Participant(name = 'Vince'   , gender = 'male'),
+        Castmember(name = 'Ariel'   , gender = 'male'),
+        Castmember(name = 'Austin'  , gender = 'male'),
+        Castmember(name = 'Ben'     , gender = 'male'),
+        Castmember(name = 'Clay'    , gender = 'male'),
+        Castmember(name = 'Deion'   , gender = 'male'),
+        Castmember(name = 'Drake'   , gender = 'male'),
+        Castmember(name = 'Jamal'   , gender = 'male'),
+        Castmember(name = 'Jeramey' , gender = 'male'),
+        Castmember(name = 'Jimmy'   , gender = 'male'),
+        Castmember(name = 'Johnny'  , gender = 'male'),
+        Castmember(name = 'Kenneth' , gender = 'male'),
+        Castmember(name = 'Matthew' , gender = 'male'),
+        Castmember(name = 'Nolan'   , gender = 'male'),
+        Castmember(name = 'Trevor'  , gender = 'male'),
+        Castmember(name = 'Vince'   , gender = 'male'),
     ]
     
-    for participant in participants:
-        db.session.add(participant)
+    for castmember in castmembers:
+        db.session.add(castmember)
     db.session.commit()
 
 
@@ -105,13 +105,13 @@ def process_league_data(league_data, league_name, episode):
         # if not owner:
         owner = Owner(name=owner_name, league_id=league.id)
         db.session.add(owner)
-        # Get participant IDs
+        # Get castmember IDs
         # print(team_members['Man'])
         # import pdb
         # pdb.set_trace()
-        man_id   = Participant.query.filter_by(name=team_members['Man'])        .first().id
-        woman_id = Participant.query.filter_by(name=team_members['Woman'])      .first().id
-        bear_id  = Participant.query.filter_by(name=team_members['BadNewsBear']).first().id
+        man_id   = Castmember.query.filter_by(name=team_members['Man'])        .first().id
+        woman_id = Castmember.query.filter_by(name=team_members['Woman'])      .first().id
+        bear_id  = Castmember.query.filter_by(name=team_members['BadNewsBear']).first().id
         
         # Create or update team for the owner
         Team.create_or_update_team(owner.id, episode, man_id, woman_id, bear_id)

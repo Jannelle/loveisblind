@@ -49,19 +49,19 @@
                     {% for man in roles_dict['Men'].all() %}
                         {% if not loop.last %}
                         <td>
-                            <button class="update-button" data-participant="{{ man.id }}" data-activity="{{ activity.id }}">
+                            <button class="update-button" data-castmember="{{ man.id }}" data-activity="{{ activity.id }}">
                                 <span class="activity-count">{{ man.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
                             </button>
-                            <button class="minus-button" data-participant="{{ man.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
+                            <button class="minus-button" data-castmember="{{ man.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
                                 -
                             </button>
                         </td>
                         {% else %}
                         <td style="border-right: 3px solid darkblue;">
-                            <button class="update-button" data-participant="{{ man.id }}" data-activity="{{ activity.id }}">
+                            <button class="update-button" data-castmember="{{ man.id }}" data-activity="{{ activity.id }}">
                                 <span class="activity-count">{{ man.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
                             </button>
-                            <button class="minus-button" data-participant="{{ man.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
+                            <button class="minus-button" data-castmember="{{ man.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
                                 -
                             </button>
                         </td>
@@ -69,10 +69,10 @@
                     {% endfor %}
                     {% for woman in roles_dict['Women'].all() %}
                         <td>
-                            <button class="update-button" data-participant="{{ woman.id }}" data-activity="{{ activity.id }}">
+                            <button class="update-button" data-castmember="{{ woman.id }}" data-activity="{{ activity.id }}">
                                 <span class="activity-count">{{ woman.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
                             </button>
-                            <button class="minus-button" data-participant="{{ woman.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
+                            <button class="minus-button" data-castmember="{{ woman.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
                                 -
                             </button>
                         </td>
@@ -102,10 +102,10 @@
                 </td>
                 {% for bear in roles_dict['Bad News Bears'].all() %}
                     <td>
-                        <button class="update-button" data-participant="{{ bear.id }}" data-activity="{{ activity.id }}">
+                        <button class="update-button" data-castmember="{{ bear.id }}" data-activity="{{ activity.id }}">
                             <span class="activity-count">{{ bear.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
                         </button>
-                        <button class="minus-button" data-participant="{{ bear.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
+                        <button class="minus-button" data-castmember="{{ bear.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
                             -
                         </button>
                     </td>
@@ -128,11 +128,11 @@
 
         // Function to handle button clicks (both increment and decrement)
         function handleButtonClick(button, increment) {
-            var participant_id = button.getAttribute('data-participant');
+            var castmember_id = button.getAttribute('data-castmember');
             var activity_id = button.getAttribute('data-activity');
             // Send the update to the backend via SocketIO
             socket.emit('activity_updated', {
-                participant_id: participant_id,
+                castmember_id: castmember_id,
                 activity_id: activity_id,
                 episode: episode,
                 increment: increment // Send whether it's an increment or decrement
@@ -156,7 +156,7 @@
         // Listen for updates from the server
         socket.on('update_activity_count', function(data) {
             // Update the count in the corresponding span
-            var button = document.querySelector('.update-button[data-participant="' + data.participant_id + '"][data-activity="' + data.activity_id + '"]');
+            var button = document.querySelector('.update-button[data-castmember="' + data.castmember_id + '"][data-activity="' + data.activity_id + '"]');
             var countSpan = button.querySelector('.activity-count');
             var currentCount = parseInt(countSpan.innerText);
             countSpan.innerText = data.increment ? currentCount + 1 : Math.max(currentCount - 1, 0);

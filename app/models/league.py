@@ -69,55 +69,55 @@ class Viewing(db.Model):
     owners   = db.relationship('Owner', secondary=viewing_owner_association, back_populates='viewings')
 
 
-class Participant_Activity_Association(db.Model):
+class Castmember_Activity_Association(db.Model):
     """
-    Represents a participant (cast member) in the fantasy game.
+    Represents a castmember (cast member) in the fantasy game.
 
     Attributes:
-        id                   (int) : The unique identifier for the participant.
-        name                 (str) : The name of the participant.
-        gender               (str) : The gender of the participant.
-        activity_association (relationship) : Relationship to Participant_Activity_Association table.
-        man_teams            (relationship) : Relationship to Team table for teams where the participant is a Man.
-        woman_teams          (relationship) : Relationship to Team table for teams where the participant is a Woman.
-        bear_teams           (relationship) : Relationship to Team table for teams where the participant is a Bad News Bear.
+        id                   (int) : The unique identifier for the castmember.
+        name                 (str) : The name of the castmember.
+        gender               (str) : The gender of the castmember.
+        activity_association (relationship) : Relationship to Castmember_Activity_Association table.
+        man_teams            (relationship) : Relationship to Team table for teams where the castmember is a Man.
+        woman_teams          (relationship) : Relationship to Team table for teams where the castmember is a Woman.
+        bear_teams           (relationship) : Relationship to Team table for teams where the castmember is a Bad News Bear.
     """
 
-    __tablename__  = 'Participant_Activity_Association'
+    __tablename__  = 'Castmember_Activity_Association'
     id             = db.Column(db.Integer, primary_key=True)
-    participant_id = db.Column(db.Integer, db.ForeignKey('Participant.id'))
+    castmember_id = db.Column(db.Integer, db.ForeignKey('Castmember.id'))
     activity_id    = db.Column(db.Integer, db.ForeignKey('Activity.id'))
     episode        = db.Column(db.String(50))
 
-    participant = db.relationship("Participant", back_populates="activity_association")
-    activity    = db.relationship("Activity", back_populates="participant_association")
+    castmember = db.relationship("Castmember", back_populates="activity_association")
+    activity    = db.relationship("Activity", back_populates="castmember_association")
 
 
-class Participant(db.Model):
+class Castmember(db.Model):
     """
-    Represents a participant (cast member) in the fantasy game.
+    Represents a castmember (cast member) in the fantasy game.
 
     Attributes:
-        id                   (int) : The unique identifier for the participant.
-        name                 (str) : The name of the participant.
-        gender               (str) : The gender of the participant.
-        activity_association (relationship) : Relationship to Participant_Activity_Association table.
-        man_teams            (relationship) : Relationship to Team table for teams where the participant is a Man.
-        woman_teams          (relationship) : Relationship to Team table for teams where the participant is a Woman.
-        bear_teams           (relationship) : Relationship to Team table for teams where the participant is a Bad News Bear.
+        id                   (int) : The unique identifier for the castmember.
+        name                 (str) : The name of the castmember.
+        gender               (str) : The gender of the castmember.
+        activity_association (relationship) : Relationship to Castmember_Activity_Association table.
+        man_teams            (relationship) : Relationship to Team table for teams where the castmember is a Man.
+        woman_teams          (relationship) : Relationship to Team table for teams where the castmember is a Woman.
+        bear_teams           (relationship) : Relationship to Team table for teams where the castmember is a Bad News Bear.
     """
-    __tablename__ = "Participant"
+    __tablename__ = "Castmember"
     id                   = db.Column(db.Integer, primary_key=True)
     name                 = db.Column(db.String(100), unique=True, nullable=False)
     gender               = db.Column(db.String(100), unique=False, nullable=False)
-    activity_association = db.relationship('Participant_Activity_Association', lazy='dynamic', back_populates='participant')
-    man_teams            = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.man_id == Participant.id")
-    woman_teams          = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.woman_id == Participant.id")
-    bear_teams           = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.bear_id == Participant.id")
+    activity_association = db.relationship('Castmember_Activity_Association', lazy='dynamic', back_populates='castmember')
+    man_teams            = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.man_id == Castmember.id")
+    woman_teams          = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.woman_id == Castmember.id")
+    bear_teams           = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.bear_id == Castmember.id")
 
     def get_activities(self, episode):
         """
-        Get a list of activities associated with the participant for a specific episode.
+        Get a list of activities associated with the castmember for a specific episode.
 
         Args:
             episode (int): The episode number for which to fetch activities.
@@ -134,42 +134,42 @@ class Participant(db.Model):
 
 class Team(db.Model):
     """
-    Represents a team of participants in the fantasy game.
+    Represents a team of castmembers in the fantasy game.
 
     Attributes:
         id        (int) : The unique identifier for the team.
         owner_id  (int) : The id of the owner of the team in the Owner table.
         episode   (int) : The episode number that the team was created for.
-        man_id    (int) : The foreign key referencing Participant.id for the Man on the team.
-        woman_id  (int) : The foreign key referencing Participant.id for the Woman on the team.
-        bear_id   (int) : The foreign key referencing Participant.id for the Bad News Bear on the team.
-        man       (relationship) : Reference to the Participant object for the Man on the team.
-        woman     (relationship) : Reference to the Participant object for the Woman on the team.
-        bear      (relationship) : Reference to the Participant object for the Bad News Bear on the team.
+        man_id    (int) : The foreign key referencing Castmember.id for the Man on the team.
+        woman_id  (int) : The foreign key referencing Castmember.id for the Woman on the team.
+        bear_id   (int) : The foreign key referencing Castmember.id for the Bad News Bear on the team.
+        man       (relationship) : Reference to the Castmember object for the Man on the team.
+        woman     (relationship) : Reference to the Castmember object for the Woman on the team.
+        bear      (relationship) : Reference to the Castmember object for the Bad News Bear on the team.
     """
     __tablename__ = "Team"
     id       = db.Column(db.Integer, primary_key=True)
     owner_id = db.Column(db.Integer, db.ForeignKey("Owner.id"))
     episode  = db.Column(db.Integer)
 
-    man_id   = db.Column(db.Integer, db.ForeignKey('Participant.id'))
-    woman_id = db.Column(db.Integer, db.ForeignKey('Participant.id'))
-    bear_id  = db.Column(db.Integer, db.ForeignKey('Participant.id'))
+    man_id   = db.Column(db.Integer, db.ForeignKey('Castmember.id'))
+    woman_id = db.Column(db.Integer, db.ForeignKey('Castmember.id'))
+    bear_id  = db.Column(db.Integer, db.ForeignKey('Castmember.id'))
 
-    man   = db.relationship("Participant",
-                          primaryjoin    = "Team.man_id == Participant.id",
+    man   = db.relationship("Castmember",
+                          primaryjoin    = "Team.man_id == Castmember.id",
                           back_populates = 'man_teams',
                           lazy           = True,
                           uselist        = False
                           )
-    woman = db.relationship("Participant",
-                            primaryjoin    = "Team.woman_id == Participant.id",
+    woman = db.relationship("Castmember",
+                            primaryjoin    = "Team.woman_id == Castmember.id",
                             back_populates = 'woman_teams',
                             lazy           = True,
                             uselist        = False
                             )
-    bear  = db.relationship("Participant",
-                           primaryjoin    = "Team.bear_id == Participant.id",
+    bear  = db.relationship("Castmember",
+                           primaryjoin    = "Team.bear_id == Castmember.id",
                            back_populates = 'bear_teams',
                            lazy           = True,
                            uselist        = False
@@ -228,11 +228,11 @@ class Activity(db.Model):
         name (str) : The description of the activity.
         pts  (int) : The points associated with the activity.
         type (str) : The type of activity ("good" or "bad").
-        participant_association (relationship): Relationship to Participant_Activity_Association table.
+        castmember_association (relationship): Relationship to Castmember_Activity_Association table.
     """
     __tablename__ = "Activity"
     id   = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), unique=False, nullable=False)
     pts  = db.Column(db.Integer, unique=False, nullable=False)
     type = db.Column(db.String(100), unique=False, nullable=False)
-    participant_association = db.relationship('Participant_Activity_Association', back_populates='activity')
+    castmember_association = db.relationship('Castmember_Activity_Association', back_populates='activity')

@@ -20,15 +20,15 @@
             </table>
             <p><b>Attendance: <span id="attendance-{{ team.id }}">(0)</span></b></p>
             {% if team.man is not none %}
-            <p><b>Man:</b> <span id="man-{{ team.id }}">{{ team.man.name }}</span> <b>(<span id="man-points-{{ team.id }}">{{ calculate_participant_points(team.man, 'good', team.episode) }}</span>)</b></p>
+            <p><b>Man:</b> <span id="man-{{ team.id }}">{{ team.man.name }}</span> <b>(<span id="man-points-{{ team.id }}">{{ calculate_castmember_points(team.man, 'good', team.episode) }}</span>)</b></p>
             {% endif %}
 
             {% if team.man is not none %}
-            <p><b>Woman:</b> <span id="woman-{{ team.id }}">{{ team.woman.name }}</span> <b>(<span id="woman-points-{{ team.id }}">{{ calculate_participant_points(team.woman, 'good', team.episode) }}</span>)</b></p>
+            <p><b>Woman:</b> <span id="woman-{{ team.id }}">{{ team.woman.name }}</span> <b>(<span id="woman-points-{{ team.id }}">{{ calculate_castmember_points(team.woman, 'good', team.episode) }}</span>)</b></p>
             {% endif %}
 
             {% if team.man is not none %}
-            <p><b>Bad news bear:</b> <span id="bear-{{ team.id }}">{{ team.bear.name }}</span> <b>(<span id="bear-points-{{ team.id }}">{{ calculate_participant_points(team.bear, 'bad', team.episode) }}</span>)</b></p>
+            <p><b>Bad news bear:</b> <span id="bear-{{ team.id }}">{{ team.bear.name }}</span> <b>(<span id="bear-points-{{ team.id }}">{{ calculate_castmember_points(team.bear, 'bad', team.episode) }}</span>)</b></p>
             {% endif %}
         </div>
         {% endfor %}

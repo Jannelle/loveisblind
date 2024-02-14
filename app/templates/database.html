@@ -6,9 +6,9 @@
         <table border: 1px solid white;>
             {% for owner in owners %}            
                 <TR background-color: #96D4D4;>
-                <TD class="c1">{{ participant.name }}</TD>
-                <TD class="c2">{{ calculate_participant_points(participant, "good") }}</TD>
-                <TD class="c3">{{ calculate_participant_points(participant, "bad") }}</TD>
+                <TD class="c1">{{ castmember.name }}</TD>
+                <TD class="c2">{{ calculate_castmember_points(castmember, "good") }}</TD>
+                <TD class="c3">{{ calculate_castmember_points(castmember, "bad") }}</TD>
                 </TR>
             {% endfor %}
         </table>

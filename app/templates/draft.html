@@ -19,31 +19,31 @@
     <div id="turnIndicator"></div>
     <div id="errorMessage" style="display: none; color: red;"></div>
     <div id="confirmationMessage" style="display: none; color: green; display: inline-block;"></div>
-    <div id="participantContainer" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+    <div id="castmemberContainer" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
         <div class="column">
             {% for man in men %}
-                <div class="participant" data-name="{{ man.name }}" data-role="man">{{ man.name }}</div>
+                <div class="castmember" data-name="{{ man.name }}" data-role="man" id="{{ man.name }}-man">{{ man.name }}</div>
             {% endfor %}
         </div>
         <div class="column">
             {% for woman in women %}
-                <div class="participant" data-name="{{ woman.name }}" data-role="woman">{{ woman.name }}</div>
+                <div class="castmember" data-name="{{ woman.name }}" data-role="woman" id="{{ woman.name }}-woman">{{ woman.name }}</div>
             {% endfor %}        
         </div>
         <div class="column">
-            {% for bear in participants %}
-                <div class="participant" data-name="{{ bear.name }}" data-role="bear">{{ bear.name }}</div>
+            {% for bear in castmembers %}
+                <div class="castmember" data-name="{{ bear.name }}" data-role="bear" id="{{ bear.name }}-bear">{{ bear.name }}</div>
             {% endfor %}
         </div>  
     </div>
     
-    <div>
+    <div id="teamsContainer">
         <h2>Teams</h2>
-        <table>
+        <table id="teamsTable">
             {% for owner in owners %}
                 <td>
                     <h3>{{ owner.name }}</h3>
-                    <select class="teamList" size="5" style="width: 200px;" data-team="{{ owner.name }}"></select>
+                    <select class="teamList" size="5" style="width: 200px;" id="{{ owner.name }}"></select>
                 </td>
             {% endfor %}
         </table>
