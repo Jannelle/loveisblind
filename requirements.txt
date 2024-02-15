@@ -9,8 +9,8 @@ flask-sqlalchemy==3.0.3
 h2==4.1.0
 httpcore==1.0.2
 importlib-metadata==7.0.1
-ngrok==1.0.0
 pandas==2.2.0
 pip-chill==1.0.3
 pyopenssl==24.0.0
 yarg==0.1.9
+gunicorn==21.2.0
