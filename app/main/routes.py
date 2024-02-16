@@ -48,18 +48,18 @@ def get_teams():
     
     if len(teams) > 0:
         return jsonify({'teams': 
-                        [
-                            {
-                                'name'         : team.owner.name,
-                                'castmembers' : {
-                                    'man'   : team.man.name,
-                                    'woman' : team.woman.name,
-                                    'bear'  : team.bear.name
-                                    }
+                    [
+                        {
+                            'name'         : team.owner.name,
+                            'castmembers' : {
+                                'woman' : [member.name for member in team.good_members if member.gender == 'female'],
+                                'man'   : [member.name for member in team.good_members if member.gender == 'male'  ],
+                                'bear'  : [member.name for member in team.bad_members],
                             }
-                            for team in teams
-                        ]
-                        })
+                        }
+                        for team in teams
+                    ]
+                })
     else:
         return jsonify({"message" : "No teams found for this episode!"})
 
@@ -141,6 +141,7 @@ def save_teams():
     
     for owner_name, team_to_parse in teams_to_parse.items():
         owner = Owner.query.filter_by(name=owner_name, league_id=selected_league_id).one()
+        print(team_to_parse)
         good_member_ids = get_castmember_ids_by_names(team_to_parse['good_members'])
         bad_member_ids  = get_castmember_ids_by_names(team_to_parse['bad_members'])
         
@@ -256,6 +257,8 @@ def get_castmember_ids_by_names(names):
     Returns:
         list: A list of cast member IDs.
     """
+    import pdb
+    # pdb.set_trace()
     castmember_ids = [Castmember.query.filter_by(name=name).first().id for name in names]
     return castmember_ids
 

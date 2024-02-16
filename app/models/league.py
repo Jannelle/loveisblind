@@ -16,15 +16,6 @@ class League(db.Model):
     name    = db.Column(db.String(100), unique=True, nullable=False)
     owners = db.relationship('Owner', back_populates='league', uselist=True)
 
-    # Define league_slug property
-    @property
-    def league_slug(self):
-        import regex as re
-        # Convert name to lowercase and replace spaces with hyphens
-        slug = re.sub(r'\s+', '-', self.name.lower())
-        # Remove any non-alphanumeric characters except hyphens
-        slug = re.sub(r'[^a-z0-9-]', '', slug)
-        return slug
     
 viewing_owner_association = db.Table('viewing_owner_association',
     db.Column('viewing_id', db.Integer, db.ForeignKey('Viewing.id')),

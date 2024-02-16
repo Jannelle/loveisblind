@@ -98,29 +98,30 @@ function populateTeams() {
                 var teamList = document.querySelector('.teamList[data-team="' + team.name + '"]');
                 teamList.innerHTML = '';  // Clear existing options
 
-                for (const [oldListName, castmember] of Object.entries(team.castmembers)) {
-                    var option = document.createElement('option');
-                    option.text = castmember;
-                    option.value = castmember;
-                    if (oldListName == "man") {
-                        option.style.backgroundColor = 'rgb(93, 212, 99)'
-                    } else if (oldListName == "woman") {
-                        option.style.backgroundColor = 'rgb(236, 236, 192)'
-                    } else if (oldListName == "bear") {
-                        option.style.backgroundColor = 'crimson'
+                for (const [oldListName, castmembers] of Object.entries(team.castmembers)) {
+                    for (const castmember of castmembers) {
+                        var option = document.createElement('option');
+                        option.text = castmember;
+                        option.value = castmember;
+                        if (oldListName == "man") {
+                            option.style.backgroundColor = 'rgb(93, 212, 99)'
+                        } else if (oldListName == "woman") {
+                            option.style.backgroundColor = 'rgb(236, 236, 192)'
+                        } else if (oldListName == "bear") {
+                            option.style.backgroundColor = 'crimson'
+                        }
+                        option.dataset.oldListName = oldListName; // Store the role in dataset
+                        teamList.add(option);
                     }
-                    option.dataset.oldListName = oldListName; // Store the role in dataset
-                    teamList.add(option);
-
-                    // Remove the castmember from the corresponding old list
+                    // Remove the castmembers from the corresponding old list
                     var oldList = document.getElementById(oldListName);
                     for (var j = 0; j < oldList.options.length; j++) {
-                        if (oldList.options[j].value === castmember) {
+                        if (castmembers.includes(oldList.options[j].value)) {
                             oldList.remove(j);
-                            break;
+                            j--; // Decrement j to account for the removed option
                         }
+                    }
                 }
-            }
         });
             showConfirmationMessage('Teams copied successfully!');
         })
@@ -240,13 +241,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
         for (var i = 0; i < teamLists.length; i++) {
             var teamName = teamLists[i].getAttribute('data-team');
-            validationResults = validateTeamList(teamName, teamLists[i])
-            if (validationResults) {
-                errors.push(validationResults)
-            }
-            
             var castmembers = Array.from(teamLists[i].options).reduce((acc, option) => {
-                acc[option.dataset.oldListName] = option.value;
+                var key = option.dataset.oldListName === 'man' || option.dataset.oldListName === 'woman' ? 'good_members' : 'bad_members';
+                if (!acc[key]) {
+                    acc[key] = [];
+                }
+                acc[key].push(option.value);
                 return acc;
             }, {});
             teamsData[teamName] = castmembers;
@@ -281,6 +281,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 showErrorMessage('Error saving data. Please try again.');
             });
     }
+    
 // Removing validation for now - we're still figuring out house rules so we should have flexibility
 //     function validateTeamList(teamName, teamList) {
 //         // Create an object to store options for each origin_list
@@ -325,7 +326,7 @@ document.addEventListener('DOMContentLoaded', function () {
 //             return errors.join('\r\n');
 //         }
 //     }
-// });
+});
 
 populateTeams()
 
