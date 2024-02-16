@@ -75,7 +75,7 @@ def score_episode(episode):
 
         men   = Castmember.query.filter_by(gender = 'male'  ) # Castmember.query.join(Team, (Team.man_id   == Castmember.id) & (Team.episode == episode))
         women = Castmember.query.filter_by(gender = 'female') # Castmember.query.join(Team, (Team.woman_id == Castmember.id) & (Team.episode == episode))
-        bears = Castmember.query.join(Team, (Team.bear_id  == Castmember.id)) # Castmember.query.join(Team, (Team.bear_id  == Castmember.id) & (Team.episode == episode))
+        bears = Castmember.query.all()
         # men   = Castmember.query.join(Team, (Team.man_id == Castmember.id) & (Team.episode == episode)) \
         #                  .join(owner, owner.id == Team.owner_id) \
         #                  .filter(owner.league_id == selected_league_id)
