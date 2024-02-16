@@ -1,0 +1,35 @@
+
+<div class="container">
+<table class="styled-table">
+    <thead>
+        <th style="text-align: center; background-color: darkblue; color: white;"></th></th>
+        <th colspan="{{ castmember_list | length }}" style="text-align: center; background-color: darkblue; color: white;">{{ role }}</th>
+    </thead>
+    <thead>
+        <th></th>
+        {% for castmember in castmember_list %}
+        <th class="styled-table">{{ castmember.name }}</th>
+        {% endfor %}
+    </thead>
+    {% for activity in activities %}
+        {% if activity.type == activity_type %}
+            <tr>
+                <td>
+                    {{ activity.name }}
+                </td>
+                {% for castmember in castmember_list %}
+                    <td>
+                        <button class="update-button" data-castmember="{{ castmember.id }}" data-activity="{{ activity.id }}">
+                            <span class="activity-count">{{ castmember.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
+                        </button>
+                        <button class="minus-button" data-castmember="{{ castmember.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
+                            -
+                        </button>
+                    </td>
+                {% endfor %}
+            </tr>
+        {% endif %}
+    {% endfor %}
+</table>
+</div>
+</div>

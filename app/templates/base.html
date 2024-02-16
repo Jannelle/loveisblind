@@ -84,9 +84,9 @@
                 margin: 25px 0;
                 font-size: 13px;
                 font-family: sans-serif;
-                min-width: 50px;
+                min-width: 60px;
+                max-width: 60px;
                 box-shadow: 0 0 20px rgba(0, 0, 0, 0.15);
-                table-layout: fixed
             }
             .styled-table thead tr {
                 background-color: #009879;
@@ -117,11 +117,37 @@
                 font-weight: bold;
                 color: #009879;
             }
+            
 
-            /* .styled-table th:first-child,
-            .styled-table td:first-child {
-                width: 200px; 
-            } */
+            .styled-table thead tr th:first-child,
+            .styled-table tbody tr td:first-child {
+                width: 8em;
+                min-width: 20em;
+                max-width: 20em;
+                left: 0px;
+                position: sticky;
+                z-index: 2
+            }
+
+                
+        .styled-table tbody tr:nth-of-type(odd) td:first-child {
+            background-color: white; /* Use the same odd row color as the other columns */
+            min-width: 300%;
+        }
+
+        .styled-table tbody tr:nth-of-type(even) td:first-child {
+            background-color: #f3f3f3; /* Use the same even row color as the other columns */
+            
+        }
+            .container {
+                overflow-x: scroll;
+                margin-left: 0px;
+                max-width: 75%;
+                display: flex;
+            }
+
+            
+
              
             p {
                 margin-bottom: 5px;
