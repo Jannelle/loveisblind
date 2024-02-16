@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-
+    
     var socket = io.connect();
 
     // Update data in case the user refreshed but we still have cached data
@@ -75,6 +75,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (event.target.classList.contains('castmember')) {
             var castmember = event.target.alt;
             var role = event.target.dataset.role;
+            // NOTE: As of 2/16/2024 all validations are going through as 
+            // we are deciding what the team compositions should be. Plus, we
+            // can always undo if someone drafts incorrectly
             socket.emit('validate_then_draft_castmember', {
                 castmember: castmember,
                 role: role,
@@ -88,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
         showErrorMessage('Error! Trying to draft ' + data.castmember + ' for ' + data.role + ' but already have ' + data.other_castmember + ' in that role.')
     });
 
-    // ====== Updating team data and displays with after drating a castmember ====== //
+    // ====== Updating team data and displays with after drafting a castmember ====== //
     socket.on('update_draft_data', function(data) {
         
         // Add new team member to their owner's list in the UI
@@ -101,11 +104,18 @@ document.addEventListener('DOMContentLoaded', function () {
         // Make a new option to add to the team list
         var newOption = document.createElement('option');
             newOption.value = draftedCastmemberName;
-            newOption.text  = draftedCastmemberName + '-' + role;
-            newOption.id    = draftedCastmemberName + role + 'added';
+            newOption.text  = draftedCastmemberName;
+            newOption.id    = draftedCastmemberName + role;
             newOption.dataset.role = role;
+            if (role == "man") {
+                newOption.style.backgroundColor = 'rgb(93, 212, 99)'
+            } else if (role == "woman") {
+                newOption.style.backgroundColor = 'rgb(236, 236, 192)'
+            } else if (role == "bear") {
+                newOption.style.backgroundColor = 'crimson'
+            }
         teamList.add(newOption);
-
+role
         // Hide the castmember from being displayed in the list of available castmembers to draft
         draftedCastmemberOption.style.display = 'none';
         // Once a team member gets drafted, the user can undo
@@ -137,66 +147,30 @@ document.addEventListener('DOMContentLoaded', function () {
         undoButton.disabled = true
     })
 
+    // Since we don't how many rounds there will be, turning this off
+    // and keep the save button enabled by default
     // ================ Ending the draft ================ //
-    socket.on('end_draft', function () {
-        // Shows draft completed message
-        // Creates save button
-        var saveButton = document.createElement('button');
-        saveButton.textContent = 'Save';
-        saveButton.id = 'saveButton';
-        document.getElementById('startDraftDiv').appendChild(saveButton);
+    // socket.on('end_draft', function () {
+    //     // Shows draft completed message
+    //     // Creates save button if it doesn't exist
+    //     var saveButton = document.getElementById('saveButton')
+    //     if (saveButton == undefined) {
+    //         document.createElement('button');
+    //         saveButton.textContent = 'Save';
+    //         saveButton.id = 'saveButton';
+    //         document.getElementById('startDraftDiv').appendChild(saveButton);
     
-        // Add an event listener to the "Save" button
-        saveButton.addEventListener('click', function () {
-            saveTeamLists();
-        });
-    })
+    //     // Add an event listener to the "Save" button
+    //     saveButton.addEventListener('click', function () {
+    //         saveTeamLists();
+    //     });
+    //     }
+    // })
+    saveButton.addEventListener('click', function () {
+        saveTeamLists();
+    });
+
     
-
-    // ================ Saving the teams ================ //
-    function saveTeamLists() {
-        var teamLists = document.getElementsByClassName('teamList');
-        var teamsData = [];
-        var errors = [];
-
-        for (var i = 0; i < teamLists.length; i++) {
-            var ownerName = teamLists[i].getAttribute('id');
-            var newTeamData = { 'name' : ownerName };
-        
-            Array.from(teamLists[i].options).forEach(option => {
-                var role = option.dataset.role;
-                var value = option.value;
-                newTeamData[role] = value;
-            });
-        
-            teamsData.push(newTeamData);
-        }
-
-        // Include the "episode" variable in the JSON data
-        var requestData = {
-            episode: episode,
-            teams: teamsData
-        };
-
-        // Send the data to the backend using AJAX
-        fetch('/save_drafted_team', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestData),
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                showConfirmationMessage('Data saved successfully!');
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                showErrorMessage('Error saving data. Please try again.');
-            });
-    }
-
     // ================ Resetting the draft ================ //
     socket.on('reset_draft', function resetDraft(data) {
         
@@ -223,34 +197,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-
-    // ================ Messages ================ //
-    // Function to show an error message
-    function showErrorMessage(message) {
-        // Display the error message (you can customize this part)
-        var errorDiv = document.getElementById('errorMessage');
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-
-        // Hide the message after a few seconds (you can adjust the timeout)
-        setTimeout(function () {
-            errorDiv.style.display = 'none';
-        }, 8000); // Hide after 3 seconds
-    }
-    
-    function showConfirmationMessage(message) {
-        // Display the confirmation message (you can customize this part)
-        var confirmationDiv = document.getElementById('confirmationMessage');
-        confirmationDiv.textContent = message;
-        confirmationDiv.style.display = 'block';
-    
-        // Hide the message after a few seconds (you can adjust the timeout)
-        setTimeout(function () {
-            confirmationDiv.style.display = 'none';
-        }, 3000); // Hide after 3 seconds
-    };
-
-
     function populateTeams() {  
         
         selectedEpisode = episode;
@@ -260,28 +206,34 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.teams) {
-                // Update team lists with the fetched data
-                data.teams.forEach(team => {
-                    var teamList = document.getElementById(team.name);
-                    teamList.innerHTML = '';  // Clear existing options
-    
-                    for (const [role, castmember] of Object.entries(team.castmembers)) {
-                        var option   = document.createElement('option');
-                        option.text  = castmember + ' ' + role;
-                        option.value = castmember;
-                        option.id    = castmember + role + 'added';
-                        option.dataset.role = role; // Store the role in dataset
-                        teamList.add(option);
-    
-                        // Remove the castmember from the corresponding old list
-                        var oldList = document.getElementById(role);
-                        var castmemberOption = document.getElementById(castmember + "-" + role);
-                        castmemberOption.style.display = 'none'; // Re-add the castmember to the container
-                    }
-                })
-                showErrorMessage('Teams already drafted!');
-                startDraftButton.disabled = true
-            }})
+                    // Update team lists with the fetched data
+                    data.teams.forEach(team => {
+                        var teamList = document.getElementById(team.name);
+                        teamList.innerHTML = '';  // Clear existing options
+        
+                        for (const [role, castmembers] of Object.entries(team.castmembers)) {
+                            for (const castmember of castmembers) {
+                                var option = document.createElement('option');
+                                option.text = castmember;
+                                option.value = castmember;
+                                if (role == "man") {
+                                    option.style.backgroundColor = 'rgb(93, 212, 99)'
+                                } else if (role == "woman") {
+                                    option.style.backgroundColor = 'rgb(236, 236, 192)'
+                                } else if (role == "bear") {
+                                    option.style.backgroundColor = 'crimson'
+                                }
+                                option.dataset.role = role; // Store the role in dataset
+                                teamList.add(option);
+                                var castmemberIcon = document.getElementById(castmember + '-' + role)
+                                castmemberIcon.hidden = true
+                            }
+                        }
+                        showErrorMessage('Teams already drafted!');
+                        startDraftButton.disabled = true
+                    })
+                }
+            })
             .catch((error) => {
                 console.error('Error:', error);
             });

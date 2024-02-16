@@ -14,7 +14,7 @@ def set_default_league_id(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@set_default_league_id
+@bp.app_template_global()
 def calculate_team_points(team):
     '''Calculates how many points a team has. It does so by looping through each Castmember in the team.'''
     

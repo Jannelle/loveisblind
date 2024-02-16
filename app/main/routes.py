@@ -14,9 +14,6 @@ def index():
     all_leagues = League.query.all()
     selected_league = League.query.get(selected_league_id)
     owners = sorted(selected_league.owners, key=calculate_owner_points, reverse=True)
-    for owner in owners:
-        for team in owner.teams:
-            print(team)
     return render_template('index.html', owners = owners, leagues = all_leagues, selected_league_id=selected_league_id)
 
 @bp.route('/select_league/', methods=['POST'])
@@ -141,7 +138,6 @@ def save_teams():
     
     for owner_name, team_to_parse in teams_to_parse.items():
         owner = Owner.query.filter_by(name=owner_name, league_id=selected_league_id).one()
-        print(team_to_parse)
         good_member_ids = get_castmember_ids_by_names(team_to_parse['good_members'])
         bad_member_ids  = get_castmember_ids_by_names(team_to_parse['bad_members'])
         

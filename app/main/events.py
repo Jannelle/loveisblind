@@ -1,8 +1,8 @@
 import socket
 from flask import request, session
 from flask_socketio import emit
-from .models.league import *
-from .extensions import socketio, db, cache
+from app.models.league import *
+from app.extensions import socketio, db, cache
 
 @socketio.on("connect")
 def handle_connect():
@@ -131,19 +131,21 @@ def validate_castmember(data):
 
     team = cache.get('teams')[cache.get('current_owner')]
 
-    # This makes sure people don't draft multiple members of the same role
-    if team[role] is not None:
-        other_castmember_in_role = team[role]
-        emit('invalid_draft', 
-             {
-                 'castmember'       : castmember,
-                 'role'             : role,
-                 'other_castmember' : other_castmember_in_role,
-             }
-        , broadcast = True)
-    else:
-        draft_castmember(castmember, role)
-        go_to_next_turn()
+    # # As of 2/16, validation has been turned off as 
+    # # we're still deciding on team requirements
+    # # This makes sure people don't draft multiple members of the same role
+    # if team[role] is not None:
+    #     other_castmember_in_role = team[role]
+    #     emit('invalid_draft', 
+    #          {
+    #              'castmember'       : castmember,
+    #              'role'             : role,
+    #              'other_castmember' : other_castmember_in_role,
+    #          }
+    #     , broadcast = True)
+    # else:
+    draft_castmember(castmember, role)
+    go_to_next_turn()
 
 
 def draft_castmember(castmember, role):
@@ -181,8 +183,8 @@ def go_to_next_turn():
         current_index = 0
         current_round += 1
     
-    if current_round > 3:
-        emit('end_draft', None, broadcast = True)
+    # if current_round > 3:
+    #     emit('end_draft', None, broadcast = True)
 
     cache.set( 'current_index' , current_index              )
     cache.set( 'current_round' , current_round              )
@@ -238,7 +240,7 @@ def undo_last_draft_selection():
                       'current_round' : current_round,
                       'draft_order'   : draft_order,
                       'option_to_unhide_id' : castmember_to_remove + '-' + castmember_to_remove_role,
-                      'option_to_remove_id' : castmember_to_remove + castmember_to_remove_role + 'added',
+                      'option_to_remove_id' : castmember_to_remove + castmember_to_remove_role,
                   })        
     if len(draft_selections) == 0:
         socketio.emit('disable_undo')

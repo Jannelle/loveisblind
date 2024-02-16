@@ -54,7 +54,7 @@
                 {% for owner in owners %}
                     <td>
                         <h3>{{ owner.name }}</h3>
-                        <select class="teamList" size="5" style="width: 200px;" data-team="{{ owner.name }}"></select>
+                        <select class="teamList" size="5" style="width: 200px;" id="{{ owner.name }}"></select>
                         <button class="teamButton" data-team="{{ owner.name }}">Add to {{ owner.name }}</button>
                         <p><button class="removeButton" data-team="{{ owner.name }}">Remove from {{ owner.name }}</button></p>
                     </td>
@@ -63,87 +63,13 @@
         </div>
     </div>
 
-    <button id="saveButton">Save</button>
-
+<button id="saveButton">Save</button>
+<script src="{{ url_for('static', filename='saveTeamLists.js') }}"></script>
+<script src="{{ url_for('static', filename='populateTeams.js') }}"></script>
+<script src="{{ url_for('static', filename='messages.js') }}"></script>
 <script>
 // JavaScript code to handle castmember selection and team assignment
 var episode = "{{ episode }}"; // Include the episode variable from the Flask template
-
-// Function to show an error message
-function showErrorMessage(message) {
-    // Display the error message (you can customize this part)
-    var errorDiv = document.getElementById('errorMessage');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-
-    // Hide the message after a few seconds (you can adjust the timeout)
-    setTimeout(function () {
-        errorDiv.style.display = 'none';
-    }, 5000); // Hide after 3 seconds
-}
-
-function populateTeams() {
-    var copyFromEpisode = document.getElementById('copyFromEpisode');
-    var selectedEpisode = copyFromEpisode.value;
-    if (selectedEpisode === "") {
-        selectedEpisode = episode
-    };
-
-    // Fetch teams data for the selected episode from the backend
-    fetch('/get_teams?episode=' + selectedEpisode)
-        .then(response => response.json())
-        .then(data => {
-            // Update team lists with the fetched data
-            data.teams.forEach(team => {
-                var teamList = document.querySelector('.teamList[data-team="' + team.name + '"]');
-                teamList.innerHTML = '';  // Clear existing options
-
-                for (const [oldListName, castmembers] of Object.entries(team.castmembers)) {
-                    for (const castmember of castmembers) {
-                        var option = document.createElement('option');
-                        option.text = castmember;
-                        option.value = castmember;
-                        if (oldListName == "man") {
-                            option.style.backgroundColor = 'rgb(93, 212, 99)'
-                        } else if (oldListName == "woman") {
-                            option.style.backgroundColor = 'rgb(236, 236, 192)'
-                        } else if (oldListName == "bear") {
-                            option.style.backgroundColor = 'crimson'
-                        }
-                        option.dataset.oldListName = oldListName; // Store the role in dataset
-                        teamList.add(option);
-                    }
-                    // Remove the castmembers from the corresponding old list
-                    var oldList = document.getElementById(oldListName);
-                    for (var j = 0; j < oldList.options.length; j++) {
-                        if (castmembers.includes(oldList.options[j].value)) {
-                            oldList.remove(j);
-                            j--; // Decrement j to account for the removed option
-                        }
-                    }
-                }
-        });
-            showConfirmationMessage('Teams copied successfully!');
-        })
-        .catch((error) => {
-            if (copyFromEpisode.value !== "") {
-                console.error('Error:', error);
-                showErrorMessage('Error copying teams. Please try again.');
-            }
-        });
-};
-
-function showConfirmationMessage(message) {
-    // Display the confirmation message (you can customize this part)
-    var confirmationDiv = document.getElementById('confirmationMessage');
-    confirmationDiv.textContent = message;
-    confirmationDiv.style.display = 'block';
-
-    // Hide the message after a few seconds (you can adjust the timeout)
-    setTimeout(function () {
-        confirmationDiv.style.display = 'none';
-    }, 3000); // Hide after 3 seconds
-};
 
 document.addEventListener('DOMContentLoaded', function () {
     var man = document.getElementById('man');
@@ -234,53 +160,7 @@ document.addEventListener('DOMContentLoaded', function () {
         saveTeamLists();
     });
 
-    function saveTeamLists() {
-        var teamLists = document.getElementsByClassName('teamList');
-        var teamsData = {};
-        var errors = [];
-
-        for (var i = 0; i < teamLists.length; i++) {
-            var teamName = teamLists[i].getAttribute('data-team');
-            var castmembers = Array.from(teamLists[i].options).reduce((acc, option) => {
-                var key = option.dataset.oldListName === 'man' || option.dataset.oldListName === 'woman' ? 'good_members' : 'bad_members';
-                if (!acc[key]) {
-                    acc[key] = [];
-                }
-                acc[key].push(option.value);
-                return acc;
-            }, {});
-            teamsData[teamName] = castmembers;
-        }
-        if (errors.length > 0) {
-            var errorMessage = errors.join("\r\n"); // Concatenate errors into one string
-            showErrorMessage(errorMessage);
-            return
-        };
-
-        // Include the "episode" variable in the JSON data
-        var requestData = {
-            episode: episode,
-            teams: teamsData
-        };
-        
-        // Send the data to the backend using AJAX
-        fetch('/save_teams', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData),
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                showConfirmationMessage('Data saved successfully!');
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                showErrorMessage('Error saving data. Please try again.');
-            });
-    }
+    
     
 // Removing validation for now - we're still figuring out house rules so we should have flexibility
 //     function validateTeamList(teamName, teamList) {
@@ -327,12 +207,9 @@ document.addEventListener('DOMContentLoaded', function () {
 //         }
 //     }
 });
-
 populateTeams()
-
-
-
 </script>
+
 
 {% endblock %}
 </body>

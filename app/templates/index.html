@@ -14,10 +14,10 @@
                         <div class="episode-info" id="team-{{ team.id }}">
                             <table style="width: 100%; text-align: center; background-color: darkblue; color: white;">
                                 <tr><td>
-                                <p><b>Episode {{ team.episode }}: (<span id ='episode-points-{{ team.id }}'>{{ team.episode_points }}</span>)</b></p>
+                                <p><b>Episode {{ team.episode }}: (<span id ='episode-points-{{ team.id }}'>{{ calculate_team_points(team) }}</span>)</b></p>
                                 </td></tr>
                             </table>
-                            <p><b>Attendance: <span id="attendance-{{ team.id }}">{% if team.attended_viewing %}(10){% endif %}</span></b></p>
+                            <p><b>Attendance: <span id="attendance-{{ team.id }}">{% if team.attended_viewing %}(10){% else %}(0){% endif %}</span></b></p>
 
                             <!-- Display Men -->
                             <p><b>Men:</b></p>

@@ -1,6 +1,6 @@
 from flask import Flask
-from app.extensions import db, cache
-from app.events import socketio
+from .extensions import db, cache
+from .main.events import socketio
 from config import Config
 
 
