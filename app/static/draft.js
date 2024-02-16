@@ -67,18 +67,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // Event delegation for clicking and drafting a each castmember.
     // Clicking a cast member validates the selection. Then either drafts or shows an error
     var castmemberContainer = document.getElementById('castmemberContainer');
-    castmemberContainer.addEventListener('click', processDraftSelection);
-    function processDraftSelection (event) {
-        
+    document.querySelectorAll('.castmember img').forEach(img => {
+        img.addEventListener('click', processDraftSelection);
+    });
+
+    function processDraftSelection(event) {
         if (event.target.classList.contains('castmember')) {
-            castmember   = event.target.textContent;
-            role         = event.target.dataset.role;
+            var castmember = event.target.alt;
+            var role = event.target.dataset.role;
             socket.emit('validate_then_draft_castmember', {
-                castmember    : castmember,
-                role          : role,
+                castmember: castmember,
+                role: role,
             });
         }
-    };
+    }
 
     // ====== Responses to validation ====== //    
     // If invalid draft, show error message
@@ -110,7 +112,6 @@ document.addEventListener('DOMContentLoaded', function () {
         undoButton.disabled = false;
     });
 
-
     
     
     // ================ Undoing a draft selection ================ //
@@ -136,19 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
         undoButton.disabled = true
     })
 
-    // Function to show an error message
-    function showErrorMessage(message) {
-        // Display the error message (you can customize this part)
-        var errorDiv = document.getElementById('errorMessage');
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-
-        // Hide the message after a few seconds (you can adjust the timeout)
-        setTimeout(function () {
-            errorDiv.style.display = 'none';
-        }, 8000); // Hide after 3 seconds
-    }
-
+    // ================ Ending the draft ================ //
     socket.on('end_draft', function () {
         // Shows draft completed message
         // Creates save button
@@ -163,18 +152,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     })
     
-    function showConfirmationMessage(message) {
-        // Display the confirmation message (you can customize this part)
-        var confirmationDiv = document.getElementById('confirmationMessage');
-        confirmationDiv.textContent = message;
-        confirmationDiv.style.display = 'block';
-    
-        // Hide the message after a few seconds (you can adjust the timeout)
-        setTimeout(function () {
-            confirmationDiv.style.display = 'none';
-        }, 3000); // Hide after 3 seconds
-    };
 
+    // ================ Saving the teams ================ //
     function saveTeamLists() {
         var teamLists = document.getElementsByClassName('teamList');
         var teamsData = [];
@@ -218,6 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
+    // ================ Resetting the draft ================ //
     socket.on('reset_draft', function resetDraft(data) {
         
         var confirmReset = confirm("Are you sure you want to reset?");
@@ -242,6 +222,34 @@ document.addEventListener('DOMContentLoaded', function () {
             startDraft();
         }
     });
+
+
+    // ================ Messages ================ //
+    // Function to show an error message
+    function showErrorMessage(message) {
+        // Display the error message (you can customize this part)
+        var errorDiv = document.getElementById('errorMessage');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+
+        // Hide the message after a few seconds (you can adjust the timeout)
+        setTimeout(function () {
+            errorDiv.style.display = 'none';
+        }, 8000); // Hide after 3 seconds
+    }
+    
+    function showConfirmationMessage(message) {
+        // Display the confirmation message (you can customize this part)
+        var confirmationDiv = document.getElementById('confirmationMessage');
+        confirmationDiv.textContent = message;
+        confirmationDiv.style.display = 'block';
+    
+        // Hide the message after a few seconds (you can adjust the timeout)
+        setTimeout(function () {
+            confirmationDiv.style.display = 'none';
+        }, 3000); // Hide after 3 seconds
+    };
+
 
     function populateTeams() {  
         
@@ -272,6 +280,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     }
                 })
                 showErrorMessage('Teams already drafted!');
+                startDraftButton.disabled = true
             }})
             .catch((error) => {
                 console.error('Error:', error);

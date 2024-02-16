@@ -61,7 +61,7 @@ def populate_castmembers():
         Castmember(name = 'AD'       , gender = 'female'),
         Castmember(name = 'Alejandra', gender = 'female'),
         Castmember(name = 'Amber'    , gender = 'female'),
-        Castmember(name = 'Amy C.'   , gender = 'female'),
+        Castmember(name = 'Amy C'   , gender = 'female'),
         Castmember(name = 'Amy'      , gender = 'female'),
         Castmember(name = 'Ashley'   , gender = 'female'),
         Castmember(name = 'Brittany' , gender = 'female'),
@@ -137,7 +137,7 @@ def populate_episode_one_teams():
         },
         "Marc": {
             "Man"         : "Matthew",
-            "Woman"       : "Amy C.",
+            "Woman"       : "Amy C",
             "BadNewsBear" : "Brittany"
         },
         "Jannelle": {
@@ -161,7 +161,7 @@ def populate_episode_one_teams():
         },
         "Jayden": {
             "Man"         : "Jamal",
-            "Woman"       : "Amy C.",
+            "Woman"       : "Amy C",
             "BadNewsBear" : "Austin"
         },
         "Jeannette": {
