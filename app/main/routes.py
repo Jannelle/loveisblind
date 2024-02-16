@@ -1,10 +1,10 @@
-from flask import Blueprint
-from flask import Flask, render_template, request, url_for, redirect, jsonify, session
+from flask import Blueprint, Flask, render_template, request, url_for, redirect, jsonify, session, send_file
 from config import DEFAULT_LEAGUE_ID
 from app.models.league import *
 from app.main import bp
 from app.main.template_globals import *
-
+import subprocess
+import os
 
 @bp.route('/', methods = ('GET', 'POST'))
 @set_default_league_id
@@ -299,3 +299,9 @@ def save_drafted_team():
     db.session.commit()
     updated_data = fetch_updated_data()
     return jsonify(updated_data)
+
+
+@bp.route('/backup/')
+def backup_database():
+    backup_file_path = '../database.db'
+    return send_file(backup_file_path, as_attachment=True)
