@@ -100,25 +100,23 @@ def process_league_data(league_data, league_name, episode):
     for owner_name, team_members in league_data.items():
         league = League.query.filter_by(name=league_name).one()
 
-        # Get owner object or create new one
-        # owner = owner.query.filter_by(name=owner_name, league_id=league.id).one()
-        # if not owner:
+
         owner = Owner(name=owner_name, league_id=league.id)
         db.session.add(owner)
-        # Get castmember IDs
-        # print(team_members['Man'])
-        # import pdb
-        # pdb.set_trace()
-        man_id   = Castmember.query.filter_by(name=team_members['Man'])        .first().id
-        woman_id = Castmember.query.filter_by(name=team_members['Woman'])      .first().id
-        bear_id  = Castmember.query.filter_by(name=team_members['BadNewsBear']).first().id
+
+        good_members = [
+            Castmember.query.filter_by(name=team_members['Man'])  .first().id,
+            Castmember.query.filter_by(name=team_members['Woman']).first().id,
+        ]
+        bad_members = [Castmember.query.filter_by(name=team_members['BadNewsBear']).first().id]
         
         # Create or update team for the owner
-        Team.create_or_update_team(owner.id, episode, man_id, woman_id, bear_id)
+        Team.create_or_update_team(owner.id, episode, good_members, bad_members)
         
         # Append the owner to the league
-        
         league.owners.append(owner)
+        print(owner.teams[0])
+
 
 def populate_episode_one_teams():
     episode = 1

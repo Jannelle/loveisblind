@@ -78,9 +78,6 @@ class Castmember_Activity_Association(db.Model):
         name                 (str) : The name of the castmember.
         gender               (str) : The gender of the castmember.
         activity_association (relationship) : Relationship to Castmember_Activity_Association table.
-        man_teams            (relationship) : Relationship to Team table for teams where the castmember is a Man.
-        woman_teams          (relationship) : Relationship to Team table for teams where the castmember is a Woman.
-        bear_teams           (relationship) : Relationship to Team table for teams where the castmember is a Bad News Bear.
     """
 
     __tablename__  = 'Castmember_Activity_Association'
@@ -89,7 +86,7 @@ class Castmember_Activity_Association(db.Model):
     activity_id    = db.Column(db.Integer, db.ForeignKey('Activity.id'))
     episode        = db.Column(db.String(50))
 
-    castmember = db.relationship("Castmember", back_populates="activity_association")
+    castmember  = db.relationship("Castmember", back_populates="activity_association")
     activity    = db.relationship("Activity", back_populates="castmember_association")
 
 
@@ -98,22 +95,29 @@ class Castmember(db.Model):
     Represents a castmember (cast member) in the fantasy game.
 
     Attributes:
-        id                   (int) : The unique identifier for the castmember.
-        name                 (str) : The name of the castmember.
-        gender               (str) : The gender of the castmember.
-        activity_association (relationship) : Relationship to Castmember_Activity_Association table.
-        man_teams            (relationship) : Relationship to Team table for teams where the castmember is a Man.
-        woman_teams          (relationship) : Relationship to Team table for teams where the castmember is a Woman.
-        bear_teams           (relationship) : Relationship to Team table for teams where the castmember is a Bad News Bear.
+        id             (int) : The unique identifier for the castmember.
+        name           (str) : The name of the castmember.
+        gender         (str) : The gender of the castmember.
+        good_teams     (relationship) : Relationship to Team table for teams where the castmember is a "good" member.
+        bad_teams      (relationship) : Relationship to Team table for teams where the castmember is a "bad" member.
     """
     __tablename__ = "Castmember"
-    id                   = db.Column(db.Integer, primary_key=True)
-    name                 = db.Column(db.String(100), unique=True, nullable=False)
-    gender               = db.Column(db.String(100), unique=False, nullable=False)
-    activity_association = db.relationship('Castmember_Activity_Association', lazy='dynamic', back_populates='castmember')
-    man_teams            = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.man_id == Castmember.id")
-    woman_teams          = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.woman_id == Castmember.id")
-    bear_teams           = db.relationship("Team", lazy='dynamic', uselist=True, primaryjoin="Team.bear_id == Castmember.id")
+    id            = db.Column(db.Integer, primary_key=True)
+    name          = db.Column(db.String(100), unique=True, nullable=False)
+    gender        = db.Column(db.String(100), unique=False, nullable=False)
+    activity_association = db.relationship("Castmember_Activity_Association", lazy='dynamic', back_populates="castmember")
+
+    good_teams = db.relationship(
+        "Team",
+        secondary="team_good_members",
+        back_populates="good_members"
+    )
+
+    bad_teams = db.relationship(
+        "Team",
+        secondary="team_bad_members",
+        back_populates="bad_members"
+    )
 
     def get_activities(self, episode):
         """
@@ -131,73 +135,66 @@ class Castmember(db.Model):
             activities.append(activity_assoc.activity)
         return activities
 
+team_good_members = db.Table(
+    "team_good_members",
+    db.Column("team_id"      , db.Integer, db.ForeignKey("Team.id")      , primary_key=True),
+    db.Column("castmember_id", db.Integer, db.ForeignKey("Castmember.id"), primary_key=True)
+)
+
+team_bad_members = db.Table(
+    "team_bad_members",
+    db.Column("team_id"      , db.Integer, db.ForeignKey("Team.id")      , primary_key=True),
+    db.Column("castmember_id", db.Integer, db.ForeignKey("Castmember.id"), primary_key=True)
+)
 
 class Team(db.Model):
     """
     Represents a team of castmembers in the fantasy game.
 
     Attributes:
-        id        (int) : The unique identifier for the team.
-        owner_id  (int) : The id of the owner of the team in the Owner table.
-        episode   (int) : The episode number that the team was created for.
-        man_id    (int) : The foreign key referencing Castmember.id for the Man on the team.
-        woman_id  (int) : The foreign key referencing Castmember.id for the Woman on the team.
-        bear_id   (int) : The foreign key referencing Castmember.id for the Bad News Bear on the team.
-        man       (relationship) : Reference to the Castmember object for the Man on the team.
-        woman     (relationship) : Reference to the Castmember object for the Woman on the team.
-        bear      (relationship) : Reference to the Castmember object for the Bad News Bear on the team.
+        id            (int) : The unique identifier for the team.
+        owner_id      (int) : The id of the owner of the team in the Owner table.
+        episode       (int) : The episode number that the team was created for.
+        good_members  (relationship) : Relationship to Castmember table for good cast members on the team.
+        bad_members   (relationship) : Relationship to Castmember table for bad cast members on the team.
     """
     __tablename__ = "Team"
-    id       = db.Column(db.Integer, primary_key=True)
-    owner_id = db.Column(db.Integer, db.ForeignKey("Owner.id"))
-    episode  = db.Column(db.Integer)
+    id            = db.Column(db.Integer, primary_key=True)
+    owner_id      = db.Column(db.Integer, db.ForeignKey("Owner.id"))
+    episode       = db.Column(db.Integer)
 
-    man_id   = db.Column(db.Integer, db.ForeignKey('Castmember.id'))
-    woman_id = db.Column(db.Integer, db.ForeignKey('Castmember.id'))
-    bear_id  = db.Column(db.Integer, db.ForeignKey('Castmember.id'))
+    good_members = db.relationship(
+        "Castmember",
+        secondary      = "team_good_members",
+        back_populates = "good_teams"
+    )
 
-    man   = db.relationship("Castmember",
-                          primaryjoin    = "Team.man_id == Castmember.id",
-                          back_populates = 'man_teams',
-                          lazy           = True,
-                          uselist        = False
-                          )
-    woman = db.relationship("Castmember",
-                            primaryjoin    = "Team.woman_id == Castmember.id",
-                            back_populates = 'woman_teams',
-                            lazy           = True,
-                            uselist        = False
-                            )
-    bear  = db.relationship("Castmember",
-                           primaryjoin    = "Team.bear_id == Castmember.id",
-                           back_populates = 'bear_teams',
-                           lazy           = True,
-                           uselist        = False
-                           )
-    
+    bad_members = db.relationship(
+        "Castmember",
+        secondary      = "team_bad_members",
+        back_populates = "bad_teams"
+    )
 
     @staticmethod
-    def get_team_for_owner_and_episode(owner_id, episode):
-        """Get the team for a owner and episode."""
-        return Team.query.filter_by(owner_id=owner_id, episode=episode).first()
-
-    @staticmethod
-    def create_or_update_team(owner_id, episode, man_id, woman_id, bear_id):
+    def create_or_update_team(owner_id, episode, good_member_ids, bad_member_ids):
         """Create or update a team."""
-        existing_team = Team.get_team_for_owner_and_episode(owner_id, episode)
+        existing_team = Team.query.filter_by(owner_id = owner_id, episode = episode).first()
         if existing_team:
+            # import pdb
+            # pdb.set_trace()
+            # print('updating existing team')
             # Update the existing team
-            existing_team.man_id   = man_id
-            existing_team.woman_id = woman_id
-            existing_team.bear_id  = bear_id
+            existing_team.good_members = Castmember.query.filter(Castmember.id.in_(good_member_ids)).all()
+            existing_team.bad_members  = Castmember.query.filter(Castmember.id.in_(bad_member_ids)).all()
         else:
             # Create a new team
+            good_members = Castmember.query.filter(Castmember.id.in_(good_member_ids)).all()
+            bad_members = Castmember.query.filter(Castmember.id.in_(bad_member_ids)).all()
             new_team = Team(
                 owner_id = owner_id,
                 episode  = episode,
-                man_id   = man_id,
-                woman_id = woman_id,
-                bear_id  = bear_id
+                good_members = good_members,
+                bad_members = bad_members,
             )
             db.session.add(new_team)
 
@@ -217,7 +214,13 @@ class Team(db.Model):
         if self.bear:
             team_dict['bear'] = self.bear.name
         return str(team_dict)
-    
+
+    def __repr__(self):
+        good_member_names = ", ".join([member.name for member in self.good_members])
+        bad_member_names = ", ".join([member.name for member in self.bad_members])
+        owner_name = Owner.query.get(self.owner_id).name if self.owner_id else None
+        return f"Team(owner_name={owner_name}, episode={self.episode}, good members: {good_member_names}, bad members: {bad_member_names})"
+
 
 class Activity(db.Model):
     """

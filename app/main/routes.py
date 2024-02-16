@@ -11,14 +11,13 @@ import os
 def index():
     selected_league_id = session.get('selected_league_id')
 
-    # Render the page with the selected league
-    # You can retrieve the league data and pass it to the template
     all_leagues = League.query.all()
     selected_league = League.query.get(selected_league_id)
-    # import pdb
-    # pdb.set_trace()
     owners = sorted(selected_league.owners, key=calculate_owner_points, reverse=True)
-    return render_template('index.html',  owners = owners, leagues = all_leagues, selected_league_id=selected_league_id)
+    for owner in owners:
+        for team in owner.teams:
+            print(team)
+    return render_template('index.html', owners = owners, leagues = all_leagues, selected_league_id=selected_league_id)
 
 @bp.route('/select_league/', methods=['POST'])
 @set_default_league_id
@@ -76,16 +75,6 @@ def score_episode(episode):
         men   = Castmember.query.filter_by(gender = 'male'  ) # Castmember.query.join(Team, (Team.man_id   == Castmember.id) & (Team.episode == episode))
         women = Castmember.query.filter_by(gender = 'female') # Castmember.query.join(Team, (Team.woman_id == Castmember.id) & (Team.episode == episode))
         bears = Castmember.query # Castmember.query.join(Team, (Team.bear_id  == Castmember.id) & (Team.episode == episode))
-        # men   = Castmember.query.join(Team, (Team.man_id == Castmember.id) & (Team.episode == episode)) \
-        #                  .join(owner, owner.id == Team.owner_id) \
-        #                  .filter(owner.league_id == selected_league_id)
-                                       
-        # women = Castmember.query.join(Team, (Team.woman_id == Castmember.id) & (Team.episode == episode)) \
-        #                  .join(owner, owner.id == Team.owner_id) \
-        #                  .filter(owner.league_id == selected_league_id)
-        # bears = Castmember.query.join(Team, (Team.bear_id == Castmember.id) & (Team.episode == episode)) \
-        #                  .join(owner, owner.id == Team.owner_id) \
-        #                  .filter(owner.league_id == selected_league_id)
 
         roles_dict = {
             'Men'            : men,
@@ -128,40 +117,40 @@ def select_teams(episode):
     selected_league_id = session.get('selected_league_id')
     
     castmembers = Castmember.query.order_by(Castmember.name).all()
-    men          = Castmember.query.filter_by(gender = 'male'  )
-    women        = Castmember.query.filter_by(gender = 'female')
+    men         = Castmember.query.filter_by(gender = 'male'  )
+    women       = Castmember.query.filter_by(gender = 'female')
     owners      = Owner     .query.filter_by(league_id = selected_league_id).order_by(Owner.name).all()
     
     return render_template('select_teams.html'
                            , leagues = League.query.all()
                            , castmembers = castmembers
-                           , men          = men
-                           , women        = women
+                           , men         = men
+                           , women       = women
                            , owners      = owners
-                           , episode      = episode
+                           , episode     = episode
                            )
 
 @bp.route('/save_teams', methods=('GET', 'POST'))
 @set_default_league_id
 def save_teams():
-    
+
     data               = request.get_json()
     episode            = data.get('episode')
     teams_to_parse     = data.get('teams')
     selected_league_id = session.get('selected_league_id')
-    print(teams_to_parse)
+    
     for owner_name, team_to_parse in teams_to_parse.items():
-        owner      = Owner.query.filter_by(name = owner_name, league_id = session.get('selected_league_id')).one()
-        man_id     = Castmember.query.filter_by(name = team_to_parse['man'  ]).one().id 
-        woman_id   = Castmember.query.filter_by(name = team_to_parse['woman']).one().id 
-        bear_id    = Castmember.query.filter_by(name = team_to_parse['bear' ]).one().id 
+        owner = Owner.query.filter_by(name=owner_name, league_id=selected_league_id).one()
+        good_member_ids = get_castmember_ids_by_names(team_to_parse['good_members'])
+        bad_member_ids  = get_castmember_ids_by_names(team_to_parse['bad_members'])
         
-        Team.create_or_update_team(owner_id  = owner.id
-                                   , episode  = episode
-                                   , man_id   = man_id
-                                   , woman_id = woman_id
-                                   , bear_id  = bear_id
-                                   )
+        Team.create_or_update_team(
+            owner_id = owner.id,
+            episode  = episode,
+            good_member_ids = good_member_ids,
+            bad_member_ids  = bad_member_ids
+        )
+    
     db.session.commit()
 
     updated_data = fetch_updated_data()
@@ -178,22 +167,19 @@ def fetch_updated_data():
     updated_data = {
         'owners': [
             {
-                'name'        : owner.name,
-                'id'          : owner.id,
-                'total_score' : calculate_owner_points(owner),
+                'name'         : owner.name,
+                'id'           : owner.id,
+                'total_score'  : calculate_owner_points(owner),
                 'teams': [
                     {
-                        'id'               : team.id,
-                        'episode'          : team.episode,
-                        'man'              : team.man.name,
-                        'woman'            : team.woman.name,
-                        'bear'             : team.bear.name,
-                        'man_points'       : calculate_castmember_points(team.man,   'good', team.episode),
-                        'woman_points'     : calculate_castmember_points(team.woman, 'good', team.episode),
-                        'bear_points'      : calculate_castmember_points(team.bear,  'bad' , team.episode),
-                        'episode_points'   : calculate_team_points(team),
-                        'attended_viewing' : team.attended_viewing,
-                        
+                        'id'              : team.id,
+                        'episode'         : team.episode,
+                        'good_members'    : [castmember.name for castmember in team.good_members],
+                        'bad_members'     : [castmember.name for castmember in team.bad_members ],
+                        'good_points'     : sum(calculate_castmember_points(castmember, 'good', team.episode) for castmember in team.good_members),
+                        'bad_points'      : sum(calculate_castmember_points(castmember, 'bad' , team.episode) for castmember in team.bad_members ),
+                        'episode_points'  : calculate_team_points(team),
+                        'attended_viewing': team.attended_viewing
                     }
                     for team in owner.teams.all()
                 ]
@@ -260,10 +246,18 @@ def draft(episode):
                            , episode      = episode
                            )
 
+def get_castmember_ids_by_names(names):
+    """
+    Get the IDs of cast members given their names.
 
-@bp.route('/test')
-def test():
-    return render_template('test.html')
+    Args:
+        names (list): A list of cast member names.
+
+    Returns:
+        list: A list of cast member IDs.
+    """
+    castmember_ids = [Castmember.query.filter_by(name=name).first().id for name in names]
+    return castmember_ids
 
 @bp.route('/get_owners')
 @set_default_league_id
@@ -278,24 +272,23 @@ def get_owners():
 @bp.route('/save_drafted_team', methods=('GET', 'POST'))
 @set_default_league_id
 def save_drafted_team():
-    data               = request.get_json()
-    episode            = data.get('episode')
-    teams_to_parse     = data.get('teams')
+    data = request.get_json()
+    episode = data.get('episode')
+    teams_to_parse = data.get('teams')
     selected_league_id = session.get('selected_league_id')
     
     for team_to_parse in teams_to_parse:
         owner_name = team_to_parse['name']
-        owner      = Owner.query.filter_by(name = owner_name, league_id = session.get('selected_league_id')).one()
-        man_id      = Castmember.query.filter_by(name = team_to_parse['man'  ]).first().id
-        woman_id    = Castmember.query.filter_by(name = team_to_parse['woman']).first().id
-        bear_id     = Castmember.query.filter_by(name = team_to_parse['bear' ]).first().id
+        owner = Owner.query.filter_by(name=owner_name, league_id=selected_league_id).one()
         
-        Team.create_or_update_team(owner_id  = owner.id
-                                   , episode  = episode
-                                   , man_id   = man_id
-                                   , woman_id = woman_id
-                                   , bear_id  = bear_id
-                                   )
+        good_member_ids = get_castmember_ids_by_names(team_to_parse['good_members'])
+        bad_member_ids  = get_castmember_ids_by_names(team_to_parse['bad_members'])
+        
+        Team.create_or_update_team(owner_id=owner.id,
+                                   episode=episode,
+                                   good_member_ids=good_member_ids,
+                                   bad_member_ids=bad_member_ids)
+    
     db.session.commit()
     updated_data = fetch_updated_data()
     return jsonify(updated_data)

@@ -25,12 +25,11 @@ def calculate_team_points(team):
         total_points += 10
 
     # Doing a separate loop for the man and woman compared to bear since they require different activity types
-    for castmember in [team.man, team.woman]:
-        if castmember: # skip if the castmember is None (this shouldn't happen in practice, but happens during testing)
-            total_points += calculate_castmember_points(castmember, "good", team.episode)
+    for castmember in team.good_members:
+        total_points += calculate_castmember_points(castmember, "good", team.episode)
         
-    if team.bear: # skip if team has no Bad News Bear
-        total_points += calculate_castmember_points(team.bear, "bad", team.episode)
+    for castmember in team.bad_members: # skip if team has no Bad News Bear
+        total_points += calculate_castmember_points(castmember, "bad", team.episode)
 
     return total_points
 

@@ -281,51 +281,51 @@ document.addEventListener('DOMContentLoaded', function () {
                 showErrorMessage('Error saving data. Please try again.');
             });
     }
+// Removing validation for now - we're still figuring out house rules so we should have flexibility
+//     function validateTeamList(teamName, teamList) {
+//         // Create an object to store options for each origin_list
+//         var optionsByOriginList = {};
+//         // Iterate over the options and group them by origin_list
+//         Array.from(teamList.options).forEach(option => {
+//             var originList = option.dataset.oldListName;
+//             if (!optionsByOriginList[originList]) {
+//                 optionsByOriginList[originList] = [];
+//             }
+//             optionsByOriginList[originList].push(option.value);
+//         });
+        
+//         // Check for multiple options for "man", "woman", and "bear" for each origin_list
+//         var errors = []
 
-    function validateTeamList(teamName, teamList) {
-        // Create an object to store options for each origin_list
-        var optionsByOriginList = {};
-        // Iterate over the options and group them by origin_list
-        Array.from(teamList.options).forEach(option => {
-            var originList = option.dataset.oldListName;
-            if (!optionsByOriginList[originList]) {
-                optionsByOriginList[originList] = [];
-            }
-            optionsByOriginList[originList].push(option.value);
-        });
+//         manOptions = optionsByOriginList['man']
+//         if (!manOptions) {
+//             errors.push('Team ' + teamName + ' is missing a man.')
+//         } else if (manOptions.length != 1) {
+//             manOptionsText = optionsByOriginList['man'].join(', ');
+//             errors.push('Team ' + teamName + ' has ' + manOptions.length + ' men: ' + manOptionsText + '.');
+//         } 
         
-        // Check for multiple options for "man", "woman", and "bear" for each origin_list
-        var errors = []
-
-        manOptions = optionsByOriginList['man']
-        if (!manOptions) {
-            errors.push('Team ' + teamName + ' is missing a man.')
-        } else if (manOptions.length != 1) {
-            manOptionsText = optionsByOriginList['man'].join(', ');
-            errors.push('Team ' + teamName + ' has ' + manOptions.length + ' men: ' + manOptionsText + '.');
-        } 
+//         womanOptions = optionsByOriginList['woman']
+//         if (!womanOptions) {
+//             errors.push('Team ' + teamName + ' is missing a woman.')
+//         } else if (womanOptions.length > 1) {
+//             womanOptionsText = optionsByOriginList['woman'].join(', ');
+//             errors.push('Team ' + teamName + ' has ' + womanOptions.length + ' women: ' + womanOptionsText + '.');
+//         } 
         
-        womanOptions = optionsByOriginList['woman']
-        if (!womanOptions) {
-            errors.push('Team ' + teamName + ' is missing a woman.')
-        } else if (womanOptions.length > 1) {
-            womanOptionsText = optionsByOriginList['woman'].join(', ');
-            errors.push('Team ' + teamName + ' has ' + womanOptions.length + ' women: ' + womanOptionsText + '.');
-        } 
+//         bearOptions = optionsByOriginList['bear']
+//         if (!bearOptions) {
+//             errors.push('Team ' + teamName + ' is missing a Bad News Bear.')
+//         } else if (bearOptions.length > 1) {
+//             bearOptionsText = optionsByOriginList['bear'].join(', ');
+//             errors.push('Team ' + teamName + ' has ' + bearOptions.length + ' bears: ' + bearOptionsText + '.');
+//         }
         
-        bearOptions = optionsByOriginList['bear']
-        if (!bearOptions) {
-            errors.push('Team ' + teamName + ' is missing a Bad News Bear.')
-        } else if (bearOptions.length > 1) {
-            bearOptionsText = optionsByOriginList['bear'].join(', ');
-            errors.push('Team ' + teamName + ' has ' + bearOptions.length + ' bears: ' + bearOptionsText + '.');
-        }
-        
-        if (errors.length > 0) {
-            return errors.join('\r\n');
-        }
-    }
-});
+//         if (errors.length > 0) {
+//             return errors.join('\r\n');
+//         }
+//     }
+// });
 
 populateTeams()
 
