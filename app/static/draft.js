@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     
+    draftStarted = false;
+
     var socket = io.connect();
 
     // Update data in case the user refreshed but we still have cached data
@@ -25,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Sending start event to server
     function startDraft() {
-        socket.emit('start_draft')
+        socket.emit('start_draft');
     }
 
     // Defining how we update the draft order
@@ -66,6 +68,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================ Drafting Castmembers ================ //
     // Event delegation for clicking and drafting a each castmember.
     // Clicking a cast member validates the selection. Then either drafts or shows an error
+
+    // Only make these events if the start has been started
     var castmemberContainer = document.getElementById('castmemberContainer');
     document.querySelectorAll('.castmember img').forEach(img => {
         img.addEventListener('click', processDraftSelection);
@@ -75,12 +79,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (event.target.classList.contains('castmember')) {
             var castmember = event.target.alt;
             var role = event.target.dataset.role;
+            var instance = event.target.dataset.instance;
             // NOTE: As of 2/16/2024 all validations are going through as 
             // we are deciding what the team compositions should be. Plus, we
             // can always undo if someone drafts incorrectly
             socket.emit('validate_then_draft_castmember', {
                 castmember: castmember,
                 role: role,
+                instance: instance,
+                image_id: event.target.id
             });
         }
     }
@@ -95,17 +102,35 @@ document.addEventListener('DOMContentLoaded', function () {
     socket.on('update_draft_data', function(data) {
         
         // Add new team member to their owner's list in the UI
-        var draftedCastmemberName   = data.drafted_castmember;
-        var draftedCastmemberOption = document.getElementById(draftedCastmemberName + "-" + data.role)
         var teamOwner               = data.owner;
-        var role                    = data.role;
         var teamList                = document.getElementById(teamOwner);
-        
+        var role                    = data.role;
+        var image_id                = data.image_id;
+        var draftedCastmemberName   = data.drafted_castmember;
+
+        // If we didn't get here by clicking an image (e.g., if we got here by populating a previously drafted team,
+        // then we can figure out the image_id by starting with 1 and then incrementing if that image
+        // has already been hidden
+    
+        if (image_id == undefined) {
+            var draftedCastmemberInstance = 3;
+            do {
+                draftedCastmemberInstance--
+                image_id = draftedCastmemberName + '-' + role + draftedCastmemberInstance
+                var draftedCastmemberImage = document.getElementById(image_id);
+                console.log(draftedCastmemberInstance)
+                } while (draftedCastmemberImage .style.display == 'none' && draftedCastmemberInstance > 0)
+        } else {
+            var draftedCastmemberInstance = image_id.slice(-1);
+        var draftedCastmemberImage = document.getElementById(image_id);
+
+        }
+
         // Make a new option to add to the team list
         var newOption = document.createElement('option');
             newOption.value = draftedCastmemberName;
             newOption.text  = draftedCastmemberName;
-            newOption.id    = draftedCastmemberName + role;
+            newOption.id    = image_id + 'list_option';
             newOption.dataset.role = role;
             if (role == "man") {
                 newOption.style.backgroundColor = 'rgb(93, 212, 99)'
@@ -115,14 +140,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 newOption.style.backgroundColor = 'crimson'
             }
         teamList.add(newOption);
-role
+
         // Hide the castmember from being displayed in the list of available castmembers to draft
-        draftedCastmemberOption.style.display = 'none';
+        draftedCastmemberImage.style.display = 'none';
+        draftedCastmemberContainer = draftedCastmemberImage.parentElement
+        draftedCastmemberContainer.style.display = 'none';
+
+        // If this was the last instance, 
+        if (draftedCastmemberInstance == 1) {
+            draftedCastmemberContainer.parentElement.style.display = 'none';
+        }
+        
         // Once a team member gets drafted, the user can undo
         undoButton.disabled = false;
     });
 
-    
     
     // ================ Undoing a draft selection ================ //
     // ====== Tell the server to undo the last draft selection ====== //    
@@ -136,18 +168,29 @@ role
         var castmemberOptionToUnhide = document.getElementById(data.option_to_unhide_id);
         var castmemberOptionToRemove = document.getElementById(data.option_to_remove_id);
         
-        castmemberOptionToUnhide.style.display = 'block'; // Re-add the castmember to the container
+        var draftedCastmemberContainer = castmemberOptionToUnhide.parentElement;
+        var draftedCastmemberGroupContainer = draftedCastmemberContainer.parentElement;
+    
+        draftedCastmemberContainer.style.display = 'block';
+        draftedCastmemberGroupContainer.style.display = 'block';
+
+        // Show the castmember option
+        castmemberOptionToUnhide.style.display = 'flex';
+        castmemberOptionToUnhide.classList.add('castmember')
+    
+        // Show the castmember's container if it's hidden
+        draftedCastmemberContainer.style.display = 'flex';
+    
+    
+        // Remove the castmember option from the team list
         castmemberOptionToRemove.remove();
-        
-        updateTurnIndicator(data.current_round, data.current_owner)
-        updateDraftOrder   (data.draft_order)
-    })
+    });
     
     socket.on('disable_undo', function() {
         undoButton.disabled = true
     })
 
-    // Since we don't how many rounds there will be, turning this off
+    // Since we don't how many rounds there will be, turn this off
     // and keep the save button enabled by default
     // ================ Ending the draft ================ //
     // socket.on('end_draft', function () {
@@ -193,7 +236,6 @@ role
             hiddenCastmembers.forEach(function(castmember) {
                 castmember.style.display = 'block';
             });
-            startDraft();
         }
     });
 
@@ -225,8 +267,18 @@ role
                                 }
                                 option.dataset.role = role; // Store the role in dataset
                                 teamList.add(option);
-                                var castmemberIcon = document.getElementById(castmember + '-' + role)
-                                castmemberIcon.hidden = true
+                                var castmemberDiv = document.getElementById(castmember + '-' + role)
+
+                                // In the family drafts, we have doubles of each role which are differentiated by 
+                                // having a 1 or a 2 appended to their names. If there's no non-instanced icon
+                                // for that castmember, then try to find instance 1
+                                if (castmemberDiv == undefined) {
+                                    var castmemberDiv = document.getElementById(castmember + '-' + role + '1')
+                                }
+                                if (castmemberDiv.hidden == true) {
+                                    var castmemberDiv = document.getElementById(castmember + '-' + role + '2')
+                                }
+                                castmemberDiv.hidden = true
                             }
                         }
                         showErrorMessage('Teams already drafted!');

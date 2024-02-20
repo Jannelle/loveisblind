@@ -167,7 +167,7 @@
         <label for="leagueSelect">Select League:</label>
         <select id="leagueSelect" name="league">
             <option value="" selected disabled>Select a League</option>
-            {% for league in leagues %}
+            {% for league in leagues() %}
                 <option value="{{ league.id }}">{{ league.name }}</option>
             {% endfor %}
         </select>

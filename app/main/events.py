@@ -70,7 +70,7 @@ def get_cached_data(episode):
                     )
                 
 
-def intialize_team_data():
+def reset_team_data():
     owners = [owner.name for owner in Owner.query.filter_by(league_id = session.get('selected_league_id')).all()]
     cache.set('owners', owners)
     teams = { owner : {
@@ -83,16 +83,20 @@ def intialize_team_data():
     cache.set('teams', teams)
 
 
-def initialize_turn_data():
+def reset_turn_data():
+    cache.set('current_round', 0 )
+    cache.set('current_index', 0 )
+    cache.set('current_owner', '')
+    cache.set('draft_selections', [])
+
+
+def roll_draft_order():
     import random
     draft_order = cache.get('owners')
     random.shuffle(draft_order)
     cache.set('draft_order', draft_order)    
-    cache.set('current_round', 0 )
-    cache.set('current_index', 0 )
     cache.set('current_owner', cache.get('draft_order')[cache.get('current_index')])
-    cache.set('draft_selections', [])
-
+    
 
 # Socket for starting the draft
 @socketio.on('start_draft')
@@ -103,11 +107,11 @@ def start_draft():
         current_round = 0
 
     if current_round == 0:
-        intialize_team_data()
-        initialize_turn_data()
+        reset_draft()
+        roll_draft_order()
+
         current_round += 1
         cache.set('current_round', current_round)
-
         emit('update_turn_data', 
             {
                 'owner'         : cache.get('current_owner'),
@@ -120,20 +124,22 @@ def start_draft():
         
 @socketio.on('reset_confirmed')
 def reset_draft():
-    intialize_team_data()    
-    initialize_turn_data()
+    reset_team_data()
+    reset_turn_data()
     
 
 @socketio.on('validate_then_draft_castmember')
 def validate_castmember(data):
     castmember = data.get('castmember')
     role       = data.get('role')
+    image_id   = data.get('image_id')
 
     team = cache.get('teams')[cache.get('current_owner')]
 
     # # As of 2/16, validation has been turned off as 
     # # we're still deciding on team requirements
-    # # This makes sure people don't draft multiple members of the same role
+    # # This makes sure people don't
+    #  draft multiple members of the same role
     # if team[role] is not None:
     #     other_castmember_in_role = team[role]
     #     emit('invalid_draft', 
@@ -144,11 +150,11 @@ def validate_castmember(data):
     #          }
     #     , broadcast = True)
     # else:
-    draft_castmember(castmember, role)
+    draft_castmember(castmember, role, image_id)
     go_to_next_turn()
 
 
-def draft_castmember(castmember, role):
+def draft_castmember(castmember, role, image_id):
     teams = cache.get('teams'        )
     owner = cache.get('current_owner')
     role  = role
@@ -156,15 +162,18 @@ def draft_castmember(castmember, role):
     # Updating the teams dictionary to reflect the newly drafted member
     teams[owner][role] = castmember
     cache.set('teams', teams)
+
     # Updating the list of draft selections. This keeps track for easy undoing
     draft_selections = cache.get('draft_selections')
-    draft_selections.append({owner : [castmember, role]})
-    cache.set('draft_selections', draft_selections)        
+    draft_selections.append({owner : [castmember, role, image_id]})
+    cache.set('draft_selections', draft_selections)
+
     emit('update_draft_data',
          {
             'drafted_castmember' : castmember,
             'owner'              : owner,
             'role'               : role, 
+            'image_id'           : image_id,
          }
     , broadcast = True)
 
@@ -209,12 +218,12 @@ def undo_last_draft_selection():
     draft_selections = cache.get('draft_selections')
     last_draft_selection = draft_selections.pop()
     
-    owner_to_undo             = list(last_draft_selection.keys())[0]
-    castmember_to_remove      = last_draft_selection[owner_to_undo][0]
-    castmember_to_remove_role = last_draft_selection[owner_to_undo][1]
+    owner_to_undo                 = list(last_draft_selection.keys())[0]
+    castmember_to_remove          = last_draft_selection[owner_to_undo][0]
+    castmember_to_remove_role     = last_draft_selection[owner_to_undo][1]
+    castmember_to_unhide_id       = last_draft_selection[owner_to_undo][2]
     
     # Remove the most recently drafted castmember from the Teams record
-
     teams[owner_to_undo][castmember_to_remove_role] = None
     current_index -= 1
     #  If a new round was just started before hitting undo, we need to undo the steps of
@@ -239,8 +248,8 @@ def undo_last_draft_selection():
                       'current_owner' : draft_order[current_index],
                       'current_round' : current_round,
                       'draft_order'   : draft_order,
-                      'option_to_unhide_id' : castmember_to_remove + '-' + castmember_to_remove_role,
-                      'option_to_remove_id' : castmember_to_remove + castmember_to_remove_role,
+                      'option_to_unhide_id' : castmember_to_unhide_id,
+                      'option_to_remove_id' : castmember_to_unhide_id + 'list_option',
                   })        
     if len(draft_selections) == 0:
         socketio.emit('disable_undo')

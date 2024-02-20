@@ -14,6 +14,16 @@ def set_default_league_id(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+@bp.app_template_global()
+def leagues():
+    from app.models.league import League
+    '''Returns all leagues in the database. This is used to fill leagues dropdown in base.html'''
+    all_leagues = League.query.all()
+
+    return all_leagues
+
+
 @bp.app_template_global()
 def calculate_team_points(team):
     '''Calculates how many points a team has. It does so by looping through each Castmember in the team.'''

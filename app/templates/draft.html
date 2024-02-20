@@ -7,28 +7,19 @@
         overflow-x: auto; /* Enable horizontal scrolling */
         height: 200px;  
     }
-    .cell {
-        width: 150px; /* Set the width of the container */
-        height: 250px;
-        overflow: hidden; /* Hide overflow content */
-        border-radius: 50%; /* Make the container circular */
-        padding: 1px; /* Optional padding */
-        margin: 1px; /* Optional margin */
-        flex-shrink: 0; /* Ensure the container doesn't shrink */
-        display: flex; /* Make container flex to align image */
-        justify-content: center; /* Center image horizontally */
-        align-items: center; /* Center image vertically */
-        flex-direction: column;
-        position: relative; /* Make the container position relative */                
-        
+    .castmember {
+        height: 175px;
+        position: relative; /* Make the image position relative */
     }
     .castmember_circle {
         width: 150px; /* Set the width of the container */
         height: 150px;
         overflow: hidden; /* Hide overflow content */
         border-radius: 50%; /* Make the container circular */
+        border: solid;
         padding: 1px; /* Optional padding */
-        margin: 1px; /* Optional margin */
+        margin: 5px; /* Optional margin */
+        margin-bottom: -90%;
         flex-shrink: 0; /* Ensure the container doesn't shrink */
         display: flex; /* Make container flex to align image */
         justify-content: center; /* Center image horizontally */
@@ -40,13 +31,17 @@
         width: 500px; /* Set the width of the image */
         height: 250px;
         object-fit: cover; /* Crop the image to fit the container */
-        position: relative; /* Make the image position relative */
+        position: absolute; /* Make the image position relative */
         object-position: center top;
-        top: 10%
+        top: -20%;
+        display: flex;
     }
     .castmember-name {
+        position: absolute;
+        bottom: -10px;
+        width: 100%; 
         text-align: center; /* Center the text horizontally */
-        margin-top: 5px; /* Optional margin to separate the image and name */
+    
     }
 </style>
 
@@ -60,51 +55,22 @@
     <div id="turnIndicator"></div>
     <div id="errorMessage" style="display: none; color: red;"></div>
     <div id="confirmationMessage" style="display: none; color: green; display: inline-block;"></div>
-    <div class="header"><h3>Men</h3></div>
-    <div class="row">
-        {% for man in men %}
-            <div class="castmember" id="{{ man.name }}-man">
-                <div class = "castmember_circle">
-                    <img class="castmember"
-                        src="{{ url_for('static', filename=man.name + '.jpg') }}" 
-                        alt="{{ man.name }}"
-                        data-role="man"
-                    >
-                </div>
-                <div class = 'castmember-name'>{{ man.name }}</div>
-            </div>
-        {% endfor %}
-    </div>
-    <div class="header"><h3>Women</h3></div>
-    <div class="row">
-        {% for woman in women %}
-            <div class="castmember" id="{{ woman.name }}-woman">
-                <div class = "castmember_circle">
-                    <img class="castmember"
-                        src="{{ url_for('static', filename=woman.name + '.jpg') }}" 
-                        alt="{{ woman.name }}"
-                        data-role="woman"
-                    >
-                </div>
-                <div class = 'castmember-name'>{{ woman.name }}</div>
-            </div>
-        {% endfor %}
-    </div>            
-    <div class="header"><h3>Bears</h3></div>
-    <div class = 'row'>
-        {% for bear in castmembers %}
-            <div class="castmember" id="{{ bear.name }}-bear">
-                <div class = "castmember_circle">
-                    <img class="castmember"
-                        src="{{ url_for('static', filename=bear.name + '.jpg') }}" 
-                        alt="{{ bear.name }}"
-                        data-role="bear"
-                    >
-                </div>
-                <div class = 'castmember-name'>{{ bear.name }}</div>
-            </div>
-        {% endfor %}
-    </div>
+
+
+    <!-- For the Family league, each castmember can be drafted twice so show each row twice  -->
+    {% for castmember_group in castmember_groups %}
+        {% with castmembers = castmember_group['castmembers'],
+                role        = castmember_group['role'],
+                header_text = castmember_group['header_text']
+        %}
+            {% if selected_league_id == '1' %}
+                {% with instances = 2 %}{% include 'castmember_row.html'  %}{% endwith %}
+            {% else %}
+                {% with instances = 1 %}{% include 'castmember_row.html'  %}{% endwith %}
+            {% endif %}
+        {% endwith %}
+    {% endfor %}
+        
 
     <div>
         <h2>Teams</h2>

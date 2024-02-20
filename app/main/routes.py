@@ -3,18 +3,16 @@ from config import DEFAULT_LEAGUE_ID
 from app.models.league import *
 from app.main import bp
 from app.main.template_globals import *
-import subprocess
-import os
+
 
 @bp.route('/', methods = ('GET', 'POST'))
 @set_default_league_id
 def index():
     selected_league_id = session.get('selected_league_id')
 
-    all_leagues = League.query.all()
     selected_league = League.query.get(selected_league_id)
     owners = sorted(selected_league.owners, key=calculate_owner_points, reverse=True)
-    return render_template('index.html', owners = owners, leagues = all_leagues, selected_league_id=selected_league_id)
+    return render_template('index.html', owners = owners)
 
 @bp.route('/select_league/', methods=['POST'])
 @set_default_league_id
@@ -80,7 +78,6 @@ def score_episode(episode):
         }
         
         return render_template('score_episode.html'
-                            , leagues = League.query.all()
                             , owners = owners
                             , episode    = episode
                             , roles_dict = roles_dict
@@ -119,7 +116,6 @@ def select_teams(episode):
     owners      = Owner     .query.filter_by(league_id = selected_league_id).order_by(Owner.name).all()
     
     return render_template('select_teams.html'
-                           , leagues = League.query.all()
                            , castmembers = castmembers
                            , men         = men
                            , women       = women
@@ -135,7 +131,7 @@ def save_teams():
     episode            = data.get('episode')
     teams_to_parse     = data.get('teams')
     selected_league_id = session.get('selected_league_id')
-    
+
     for owner_name, team_to_parse in teams_to_parse.items():
         owner = Owner.query.filter_by(name=owner_name, league_id=selected_league_id).one()
         good_member_ids = get_castmember_ids_by_names(team_to_parse['good_members'])
@@ -218,10 +214,8 @@ def add_or_remove_owners():
                 db.session.delete(owner)
                 db.session.commit()
 
-    # Fetch the list of owners from the database
     owners = Owner.query.all()
-    leagues = League.query.all()
-    return render_template('add_or_remove_owners.html', owners=owners, leagues=leagues)
+    return render_template('add_or_remove_owners.html', owners=owners)
 
 
 @bp.route('/draft/<int:episode>')
@@ -229,18 +223,31 @@ def draft(episode):
     selected_league_id = session.get('selected_league_id')
     
     castmembers = Castmember.query.order_by(Castmember.name).all()
-    men         = Castmember.query.filter_by(gender    = 'male'  )
-    women       = Castmember.query.filter_by(gender    = 'female')
+    men         = Castmember.query.filter_by(gender    = 'male'  ).all()
+    women       = Castmember.query.filter_by(gender    = 'female').all()
     owners      = Owner     .query.filter_by(league_id = selected_league_id).order_by(Owner.name).all()
+
+    castmember_groups = [
+        {'castmembers' : men,
+         'role'        : 'man',
+         'header_text' : 'Men',
+        },
+        {'castmembers' : women,
+         'role'        : 'woman',
+         'header_text' : 'Women',
+        },
+        {'castmembers' : castmembers,
+         'role'        : 'bear',
+         'header_text' : 'Bad News Bears',
+        },
+    ]
     
-    # men = men.all().query.filter_by(name = 'Ariel')   
     return render_template('draft.html'
-                           , leagues      = League.query.all()
-                           , castmembers = castmembers
-                           , men          = men
-                           , women        = women
-                           , owners      = owners
-                           , episode      = episode
+                           , castmembers        = castmembers
+                           , castmember_groups  = castmember_groups
+                           , owners             = owners
+                           , episode            = episode
+                           , selected_league_id = selected_league_id
                            )
 
 def get_castmember_ids_by_names(names):
@@ -266,31 +273,6 @@ def get_owners():
     owners = Owner.query.filter_by(league_id = selected_league_id)
     owner_data = [owner.name for owner in owners]
     return jsonify(owners=owner_data)
-
-
-@bp.route('/save_drafted_team', methods=('GET', 'POST'))
-@set_default_league_id
-def save_drafted_team():
-    data = request.get_json()
-    episode = data.get('episode')
-    teams_to_parse = data.get('teams')
-    selected_league_id = session.get('selected_league_id')
-    
-    for team_to_parse in teams_to_parse:
-        owner_name = team_to_parse['name']
-        owner = Owner.query.filter_by(name=owner_name, league_id=selected_league_id).one()
-        
-        good_member_ids = get_castmember_ids_by_names(team_to_parse['good_members'])
-        bad_member_ids  = get_castmember_ids_by_names(team_to_parse['bad_members'])
-        
-        Team.create_or_update_team(owner_id=owner.id,
-                                   episode=episode,
-                                   good_member_ids=good_member_ids,
-                                   bad_member_ids=bad_member_ids)
-    
-    db.session.commit()
-    updated_data = fetch_updated_data()
-    return jsonify(updated_data)
 
 
 @bp.route('/backup/')
