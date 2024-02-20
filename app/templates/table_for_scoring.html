@@ -1,35 +1,31 @@
-
-<div class="container">
-<table class="styled-table">
+<table class="styled-table" style="margin: 5px;">
     <thead>
-        <th style="text-align: center; background-color: darkblue; color: white;"></th></th>
-        <th colspan="{{ castmember_list | length }}" style="text-align: center; background-color: darkblue; color: white;">{{ role }}</th>
-    </thead>
-    <thead>
-        <th></th>
-        {% for castmember in castmember_list %}
-        <th class="styled-table">{{ castmember.name }}</th>
-        {% endfor %}
+        <thead><th colspan = 2 align="center">{{ role }}</th></thead>
+        <th style="text-align: center; background-color: darkblue; color: white;">Select castmember</th>
+        <th style="text-align: center; background-color: darkblue; color: white;">
+            <select style="width: 75    px" class="castmember-dropdown" data-role="{{ role }}">
+                <option value="">Select</option>
+                {% for castmember in castmember_list %}
+                    <option value="{{ castmember.id }}">{{ castmember.name }}</option>
+                {% endfor %}
+            </select>
+        </th>
     </thead>
     {% for activity in activities %}
         {% if activity.type == activity_type %}
             <tr>
-                <td>
-                    {{ activity.name }}
-                </td>
-                {% for castmember in castmember_list %}
-                    <td>
-                        <button class="update-button" data-castmember="{{ castmember.id }}" data-activity="{{ activity.id }}">
+                <td>{{ activity.name }}</td>
+                <td class="activity-buttons" align="center">
+                    {% for castmember in castmember_list %}
+                        <button class="update-button" data-role="{{ role }}" data-castmember="{{ castmember.id }}" data-activity="{{ activity.id }}" style="display: none;">
                             <span class="activity-count">{{ castmember.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
                         </button>
-                        <button class="minus-button" data-castmember="{{ castmember.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
+                        <button class="minus-button" data-role="{{ role }}" data-castmember="{{ castmember.id }}" data-activity="{{ activity.id }}" style="display: none; background-color: darkred;">
                             -
                         </button>
-                    </td>
-                {% endfor %}
+                    {% endfor %}
+                </td>
             </tr>
         {% endif %}
     {% endfor %}
 </table>
-</div>
-</div>

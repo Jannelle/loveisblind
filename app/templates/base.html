@@ -4,7 +4,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>{% block title %}Your Website Title{% endblock %}</title>
+        <title>{% block title %}Fantasy Love is Blind{% endblock %}</title>
         
         <style>
             body {
@@ -78,7 +78,6 @@
                 font-size: 14px; /* Adjust the font size as needed */
             }
 
-            
             .styled-table {
                 border-collapse: collapse;
                 margin: 25px 0;
@@ -121,12 +120,8 @@
 
             .styled-table thead tr th:first-child,
             .styled-table tbody tr td:first-child {
-                width: 8em;
-                min-width: 20em;
-                max-width: 20em;
+                min-width: 25em;
                 left: 0px;
-                position: sticky;
-                z-index: 2
             }
 
                 
@@ -139,20 +134,19 @@
             background-color: #f3f3f3; /* Use the same even row color as the other columns */
             
         }
-            .container {
-                overflow-x: scroll;
-                margin-left: 0px;
-                max-width: 75%;
-                display: flex;
-            }
+        .container {
+            margin-left: 0px;
+            max-width: 75%;
+            display: flex;
+        }
 
             
 
-             
-            p {
-                margin-bottom: 5px;
-                margin-top: 5px;
-            }
+            
+        p {
+            margin-bottom: 5px;
+            margin-top: 5px;
+        }
 
             
         </style>
@@ -175,7 +169,7 @@
         <a href="{{ url_for('.index') }}" >Current scores</a>
 
         <form method="get" id="createTeamForm" style="margin-right: 50px; margin-left: 50px">
-            <label for="createTeamSelect">Create team:</label>
+            <label for="createTeamSelect">Draft team:</label>
             <select id="createTeamSelect" name="createTeam" onchange="updateActionCreateTeam()">
                 <option value="" selected disabled>Select an Episode</option>
                 {% for episode_number in range(1, 13) %}
@@ -219,7 +213,7 @@
         function updateActionCreateTeam() {
             var selectedEpisode = document.getElementById("createTeamSelect").value;
             var dropdown = document.getElementById("createTeamSelect");
-            window.location.href = "/select_teams/" + selectedEpisode
+            window.location.href = "/draft/" + selectedEpisode
             dropdown.selectedIndex = selectedEpisode - 1
             
         }

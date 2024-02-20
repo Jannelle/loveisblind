@@ -7,11 +7,12 @@
 
         
 </style>
+<!-- TODO - Change layout so instead of a table, you click a person and then you click what they did. -->
 {% block content %}
 <button id="backup-btn"><a href="/backup">Backup Database</a></button>
     <title>Episode {{ episode }}</title>
 <body>
-    <b>Attendance:</b>
+    <p><b>Attendance:</b></p>
     <form action="/score_episode/{{ episode }}" method="POST">
         <span style="font-size: 14px">
         {% for owner in owners %}
@@ -20,28 +21,39 @@
         </span>
         <button type="submit">Submit</button>
     </form>
-
-{% for key, value in roles_dict.items() %}
-    {% if key != 'Bad News Bears' %}
-        {% set activity_type = "good" %}
-    {% else %}
-        {% set activity_type = "bad" %}
-    {% endif %}
-    {% with castmember_list=value.all(), role=key %}
-        {% include 'table_for_scoring.html'  %}
-    {% endwith %}
-{% endfor %}
+<div class="container" style="display:flex;">
+    {% for key, value in roles_dict.items() %}
+        {% if key != 'Bad News Bears' %}
+            {% set activity_type = "good" %}
+        {% else %}
+            {% set activity_type = "bad" %}
+        {% endif %}
+        {% with castmember_list=value.all(), role=key %}
+            {% include 'table_for_scoring.html'  %}
+        {% endwith %}
+    {% endfor %}
+</div>
 
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        var episode = "{{ episode }}"; // Include the episode variable from the Flask template
-        var updateButtons = document.querySelectorAll('.update-button');
-        var minusButtons  = document.querySelectorAll('.minus-button' );
-        
+        var episode         = "{{ episode }}"; // Include the episode variable from the Flask template
+        var activityButtons = document.querySelectorAll('.activity-buttons');
+        var updateButtons   = document.querySelectorAll('.update-button');
+        var minusButtons    = document.querySelectorAll('.minus-button' );
+        var dropdowns       = document.getElementsByClassName('castmember-dropdown');        
+
         // Connect to the server via SocketIO
         var socket = io.connect();
+        var castmemberContainers = document.querySelectorAll('.castmember-container');
 
+        // Event listener for cast member elements
+        castmemberContainers.forEach(function(container) {
+            container.parentElement.addEventListener('click', function() {
+                // Toggle visibility of corresponding container
+                container.style.display = container.style.display === 'none' ? 'block' : 'none';
+            });
+        });
         // Function to handle button clicks (both increment and decrement)
         function handleButtonClick(button, increment) {
             var castmember_id = button.getAttribute('data-castmember');
@@ -77,6 +89,34 @@
             var currentCount = parseInt(countSpan.innerText);
             countSpan.innerText = data.increment ? currentCount + 1 : Math.max(currentCount - 1, 0);
         });
+
+    
+        // Iterate over each dropdown and attach the event listener
+        for (var i = 0; i < dropdowns.length; i++) {
+            dropdowns[i].addEventListener('change', function() {
+                showButtonsForCastmember(this)
+            })
+        };
+
+        function showButtonsForCastmember(dropdown) {
+            var castmemberId = dropdown.value;
+            role = dropdown.dataset.role
+            activityButtons.forEach(function(buttonContainer) {
+                var castmemberButtons = buttonContainer.querySelectorAll('button');
+                castmemberButtons.forEach(function(button) {
+                    
+                    if ( button.getAttribute('data-role') === role ) {
+                        if (button.getAttribute('data-castmember') === castmemberId) {
+                            button.style.display = 'inline-block'; // Show the buttons for the selected cast member
+                        } else {
+                            
+                        button.style.display = 'none'; // Hide buttons for other cast members
+                        }
+                    }
+                });
+            });
+        }
+        
     });     
 
 </script>

@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ====== Updating team data and displays with after drafting a castmember ====== //
     socket.on('update_draft_data', function(data) {
-        
+        // TODO - for the friends league, if a person is drafted remove all pictures of them (from other groups)
         // Add new team member to their owner's list in the UI
         var teamOwner               = data.owner;
         var teamList                = document.getElementById(teamOwner);
@@ -111,7 +111,6 @@ document.addEventListener('DOMContentLoaded', function () {
         // If we didn't get here by clicking an image (e.g., if we got here by populating a previously drafted team,
         // then we can figure out the image_id by starting with 1 and then incrementing if that image
         // has already been hidden
-    
         if (image_id == undefined) {
             var draftedCastmemberInstance = 3;
             do {
