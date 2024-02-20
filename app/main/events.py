@@ -167,7 +167,6 @@ def draft_castmember(castmember, role, image_id):
     draft_selections = cache.get('draft_selections')
     draft_selections.append({owner : [castmember, role, image_id]})
     cache.set('draft_selections', draft_selections)
-
     emit('update_draft_data',
          {
             'drafted_castmember' : castmember,

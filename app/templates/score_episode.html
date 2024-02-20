@@ -3,14 +3,9 @@
 {% block title %}
     Score Episode {{ episode }}
 {% endblock %}
-<style>
-
-        
-</style>
-<!-- TODO - Change layout so instead of a table, you click a person and then you click what they did. -->
 {% block content %}
 <button id="backup-btn"><a href="/backup">Backup Database</a></button>
-    <title>Episode {{ episode }}</title>
+<title>Episode {{ episode }}</title>
 <body>
     <p><b>Attendance:</b></p>
     <form action="/score_episode/{{ episode }}" method="POST">

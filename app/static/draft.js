@@ -100,30 +100,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ====== Updating team data and displays with after drafting a castmember ====== //
     socket.on('update_draft_data', function(data) {
-        // TODO - for the friends league, if a person is drafted remove all pictures of them (from other groups)
         // Add new team member to their owner's list in the UI
-        var teamOwner               = data.owner;
-        var teamList                = document.getElementById(teamOwner);
-        var role                    = data.role;
-        var image_id                = data.image_id;
-        var draftedCastmemberName   = data.drafted_castmember;
-
-        // If we didn't get here by clicking an image (e.g., if we got here by populating a previously drafted team,
-        // then we can figure out the image_id by starting with 1 and then incrementing if that image
-        // has already been hidden
-        if (image_id == undefined) {
-            var draftedCastmemberInstance = 3;
-            do {
-                draftedCastmemberInstance--
-                image_id = draftedCastmemberName + '-' + role + draftedCastmemberInstance
-                var draftedCastmemberImage = document.getElementById(image_id);
-                console.log(draftedCastmemberInstance)
-                } while (draftedCastmemberImage .style.display == 'none' && draftedCastmemberInstance > 0)
-        } else {
-            var draftedCastmemberInstance = image_id.slice(-1);
-        var draftedCastmemberImage = document.getElementById(image_id);
-
-        }
+        var teamOwner                 = data.owner;
+        var teamList                  = document.getElementById(teamOwner);
+        var role                      = data.role;
+        var image_id                  = data.image_id;
+        var draftedCastmemberName     = data.drafted_castmember;
+        var castmemberInstance        = image_id.slice(-1);
+        var draftedCastmemberImage    = document.getElementById(image_id);
 
         // Make a new option to add to the team list
         var newOption = document.createElement('option');
@@ -139,22 +123,26 @@ document.addEventListener('DOMContentLoaded', function () {
                 newOption.style.backgroundColor = 'crimson'
             }
         teamList.add(newOption);
-
-        // Hide the castmember from being displayed in the list of available castmembers to draft
-        draftedCastmemberImage.style.display = 'none';
-        draftedCastmemberContainer = draftedCastmemberImage.parentElement
-        draftedCastmemberContainer.style.display = 'none';
-
-        // If this was the last instance, 
-        if (draftedCastmemberInstance == 1) {
-            draftedCastmemberContainer.parentElement.style.display = 'none';
-        }
+        
+        hideCastmember(draftedCastmemberImage, castmemberInstance);
         
         // Once a team member gets drafted, the user can undo
         undoButton.disabled = false;
     });
 
-    
+    function hideCastmember(castmemberImage, instance) {
+        // Hide the castmember from being displayed in the list of available castmembers to draft
+        castmemberImage.style.visibility = 'hidden';
+        castmemberContainer = castmemberImage.parentElement
+        castmemberContainer.style.visibility = 'hidden';
+        // If this was the last instance, 
+        if (instance == 1) {
+            console.log(castmemberContainer.parentElement.hidden)
+            castmemberContainer.parentElement.hidden = true;
+            // console.log(castmemberContainer.parentElement.style.visibility)
+        }
+    }
+
     // ================ Undoing a draft selection ================ //
     // ====== Tell the server to undo the last draft selection ====== //    
     var undoButton = document.getElementById('undoButton');
@@ -167,19 +155,12 @@ document.addEventListener('DOMContentLoaded', function () {
         var castmemberOptionToUnhide = document.getElementById(data.option_to_unhide_id);
         var castmemberOptionToRemove = document.getElementById(data.option_to_remove_id);
         
-        var draftedCastmemberContainer = castmemberOptionToUnhide.parentElement;
+        var draftedCastmemberContainer      = castmemberOptionToUnhide.parentElement;
         var draftedCastmemberGroupContainer = draftedCastmemberContainer.parentElement;
     
-        draftedCastmemberContainer.style.display = 'block';
-        draftedCastmemberGroupContainer.style.display = 'block';
-
-        // Show the castmember option
-        castmemberOptionToUnhide.style.display = 'flex';
-        castmemberOptionToUnhide.classList.add('castmember')
-    
-        // Show the castmember's container if it's hidden
-        draftedCastmemberContainer.style.display = 'flex';
-    
+        draftedCastmemberGroupContainer.visibility = 'visible'
+        castmemberOptionToUnhide       .visibility = 'visible'
+        draftedCastmemberContainer     .visibility = 'visible'
     
         // Remove the castmember option from the team list
         castmemberOptionToRemove.remove();
@@ -231,9 +212,9 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         
             // Show all hidden castmembers
-            var hiddenCastmembers = document.querySelectorAll('.castmember[style="display: none;"]');
+            var hiddenCastmembers = document.querySelectorAll('.castmember[hidden="true"]');
             hiddenCastmembers.forEach(function(castmember) {
-                castmember.style.display = 'block';
+                castmember.style.visibility = 'visible';
             });
         }
     });
@@ -266,18 +247,15 @@ document.addEventListener('DOMContentLoaded', function () {
                                 }
                                 option.dataset.role = role; // Store the role in dataset
                                 teamList.add(option);
-                                var castmemberDiv = document.getElementById(castmember + '-' + role)
 
-                                // In the family drafts, we have doubles of each role which are differentiated by 
-                                // having a 1 or a 2 appended to their names. If there's no non-instanced icon
-                                // for that castmember, then try to find instance 1
-                                if (castmemberDiv == undefined) {
-                                    var castmemberDiv = document.getElementById(castmember + '-' + role + '1')
-                                }
-                                if (castmemberDiv.hidden == true) {
-                                    var castmemberDiv = document.getElementById(castmember + '-' + role + '2')
-                                }
-                                castmemberDiv.hidden = true
+                                // Hide the castmembers that are already assigned to a team
+                                var instance = 3;
+                                do {
+                                    instance--
+                                    image_id = castmember + '-' + role + instance
+                                    var castmemberImage = document.getElementById(image_id);
+                                } while (castmemberImage.style.visibility == 'hidden' && instance > 0)
+                                hideCastmember(castmemberImage, instance)
                             }
                         }
                         showErrorMessage('Teams already drafted!');
