@@ -1,6 +1,4 @@
 document.addEventListener('DOMContentLoaded', function () {
-    
-    draftStarted = false;
 
     var socket = io.connect();
 
@@ -87,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 castmember: castmember,
                 role: role,
                 instance: instance,
-                image_id: event.target.id
+                imageID: event.target.id
             });
         }
     }
@@ -99,49 +97,66 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // ====== Updating team data and displays with after drafting a castmember ====== //
-    socket.on('update_draft_data', function(data) {
-        // Add new team member to their owner's list in the UI
-        var teamOwner                 = data.owner;
-        var teamList                  = document.getElementById(teamOwner);
-        var role                      = data.role;
-        var image_id                  = data.image_id;
-        var draftedCastmemberName     = data.drafted_castmember;
-        var castmemberInstance        = image_id.slice(-1);
-        var draftedCastmemberImage    = document.getElementById(image_id);
-
+    function draftCastmember(teamList, imageID, draftedCastmemberName, role) {
+        console.log(draftedCastmemberName)
+        console.log(imageID)
+        // How I'm color coding
+        let rolesDict = {
+            man   : 'lightblue' ,
+            woman : 'pink' ,
+            bear  : 'brown',
+        };
+        
         // Make a new option to add to the team list
-        var newOption = document.createElement('option');
-            newOption.value = draftedCastmemberName;
-            newOption.text  = draftedCastmemberName;
-            newOption.id    = image_id + 'list_option';
-            newOption.dataset.role = role;
-            if (role == "man") {
-                newOption.style.backgroundColor = 'rgb(93, 212, 99)'
-            } else if (role == "woman") {
-                newOption.style.backgroundColor = 'rgb(236, 236, 192)'
-            } else if (role == "bear") {
-                newOption.style.backgroundColor = 'crimson'
-            }
+        var newOption   = document.createElement('option'); 
+        newOption.text = draftedCastmemberName;
+        newOption.id    = imageID + 'list_option'; // Making sure this ID is different from the image's ID
+        newOption.dataset.role = role;
+        newOption.style.backgroundColor = rolesDict[role]
         teamList.add(newOption);
-        
-        hideCastmember(draftedCastmemberImage, castmemberInstance);
-        
+
+        // In the Friends league, each castmember can only be drafted once across all roles so
+        // hide that castmember from all roles
+        const allRoles = ['man', 'woman', 'bear'];
+        instance = imageID.slice(-1);
+        if (selected_league_id == 1) {
+            for (const newRole of allRoles) {
+                imageToHide = document.getElementById(draftedCastmemberName + '-' + newRole + instance)
+                if (imageToHide !== null) {
+                    hideCastmember(draftedCastmemberName + '-' + newRole + instance)
+                }
+            }
+        } else {
+            hideCastmember(imageID);
+        }
+
         // Once a team member gets drafted, the user can undo
         undoButton.disabled = false;
-    });
+    }
 
-    function hideCastmember(castmemberImage, instance) {
+    function hideCastmember(imageID) {
+        var castmemberImage = document.getElementById(imageID)
+        var instance = imageID.slice(-1);
+
         // Hide the castmember from being displayed in the list of available castmembers to draft
         castmemberImage.style.visibility = 'hidden';
-        castmemberContainer = castmemberImage.parentElement
+        castmemberContainer = castmemberImage.parentElement // This is the circle container
         castmemberContainer.style.visibility = 'hidden';
-        // If this was the last instance, 
+
+        // If this was the last instance, hide the entire container w/ the castmember's name
         if (instance == 1) {
-            console.log(castmemberContainer.parentElement.hidden)
             castmemberContainer.parentElement.hidden = true;
-            // console.log(castmemberContainer.parentElement.style.visibility)
         }
     }
+
+    socket.on('drafted_castmember', function(data) {
+        draftCastmember(
+            document.getElementById(data.owner),
+            data.image_id,
+            data.drafted_castmember,
+            data.role,
+            )
+    });    
 
     // ================ Undoing a draft selection ================ //
     // ====== Tell the server to undo the last draft selection ====== //    
@@ -152,16 +167,17 @@ document.addEventListener('DOMContentLoaded', function () {
     // ====== Update the UI with the un-done selection ====== //    
     socket.on('draft_data_reversed', function (data) {
         var teamList = document.getElementById(data.owner);
-        var castmemberOptionToUnhide = document.getElementById(data.option_to_unhide_id);
-        var castmemberOptionToRemove = document.getElementById(data.option_to_remove_id);
+        castmemberOptionToUnhide = document.getElementById(data.option_to_unhide_id);
+        castmemberOptionToRemove = document.getElementById(data.option_to_remove_id);
         
-        var draftedCastmemberContainer      = castmemberOptionToUnhide.parentElement;
-        var draftedCastmemberGroupContainer = draftedCastmemberContainer.parentElement;
+        draftedCastmemberContainer      = castmemberOptionToUnhide  .parentElement;
+        draftedCastmemberGroupContainer = draftedCastmemberContainer.parentElement;
     
-        draftedCastmemberGroupContainer.visibility = 'visible'
-        castmemberOptionToUnhide       .visibility = 'visible'
-        draftedCastmemberContainer     .visibility = 'visible'
-    
+        draftedCastmemberGroupContainer.style.visibility = 'visible'
+        castmemberOptionToUnhide       .style.visibility = 'visible'
+        draftedCastmemberContainer     .style.visibility = 'visible'
+        draftedCastmemberGroupContainer.hidden = false;
+        
         // Remove the castmember option from the team list
         castmemberOptionToRemove.remove();
     });
@@ -232,34 +248,35 @@ document.addEventListener('DOMContentLoaded', function () {
                     data.teams.forEach(team => {
                         var teamList = document.getElementById(team.name);
                         teamList.innerHTML = '';  // Clear existing options
-        
                         for (const [role, castmembers] of Object.entries(team.castmembers)) {
                             for (const castmember of castmembers) {
-                                var option = document.createElement('option');
-                                option.text = castmember;
-                                option.value = castmember;
-                                if (role == "man") {
-                                    option.style.backgroundColor = 'rgb(93, 212, 99)'
-                                } else if (role == "woman") {
-                                    option.style.backgroundColor = 'rgb(236, 236, 192)'
-                                } else if (role == "bear") {
-                                    option.style.backgroundColor = 'crimson'
+                                // Figure out what instance of the image we should be hiding
+                                // Starting at 3 because there are a max of 2 instances
+                                let foundImages = document.querySelectorAll('img[id^=' + castmember.replace(/\s/g, '\\ ') + '-' + role);
+                                var instance = foundImages.length;
+                                
+                                foundImageToHide = false
+                                let imageID = `${castmember}-${role}${instance}`
+                                while (instance >= 1 && !foundImageToHide) {
+                                    let image   = document.getElementById(imageID);
+                                    if (image && !image.hidden) {
+                                        // Element exists and is visible, do something with it
+                                        foundImageToHide = true; // Exit the loop
+                                    }
+                                    // Decrement the instance for the next iteration
+                                    instance--;
                                 }
-                                option.dataset.role = role; // Store the role in dataset
-                                teamList.add(option);
-
-                                // Hide the castmembers that are already assigned to a team
-                                var instance = 3;
-                                do {
-                                    instance--
-                                    image_id = castmember + '-' + role + instance
-                                    var castmemberImage = document.getElementById(image_id);
-                                } while (castmemberImage.style.visibility == 'hidden' && instance > 0)
-                                hideCastmember(castmemberImage, instance)
+                                
+                                draftCastmember(
+                                    teamList,
+                                    imageID,
+                                    castmember,
+                                    role,
+                                    )
+                                showErrorMessage('Teams already drafted!');
+                                startDraftButton.disabled = true
                             }
                         }
-                        showErrorMessage('Teams already drafted!');
-                        startDraftButton.disabled = true
                     })
                 }
             })

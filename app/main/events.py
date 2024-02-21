@@ -61,7 +61,7 @@ def get_cached_data(episode):
         for owner, members in teams.items():
             for role, castmember in members.items():
                 if castmember:
-                    emit('update_draft_data',
+                    emit('drafted_castmember',
                         {
                             'owner'              : owner,
                             'drafted_castmember' : castmember,
@@ -132,7 +132,7 @@ def reset_draft():
 def validate_castmember(data):
     castmember = data.get('castmember')
     role       = data.get('role')
-    image_id   = data.get('image_id')
+    image_id   = data.get('imageID')
 
     team = cache.get('teams')[cache.get('current_owner')]
 
@@ -166,13 +166,14 @@ def draft_castmember(castmember, role, image_id):
     # Updating the list of draft selections. This keeps track for easy undoing
     draft_selections = cache.get('draft_selections')
     draft_selections.append({owner : [castmember, role, image_id]})
+    
     cache.set('draft_selections', draft_selections)
-    emit('update_draft_data',
+    emit('drafted_castmember',
          {
+            'image_id'           : image_id,
             'drafted_castmember' : castmember,
             'owner'              : owner,
             'role'               : role, 
-            'image_id'           : image_id,
          }
     , broadcast = True)
 
