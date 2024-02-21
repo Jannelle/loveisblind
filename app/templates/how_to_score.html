@@ -2,33 +2,33 @@
 
 {% block content %}
 <h1 class="title">{% block title %} Activity and Score {% endblock %}</h1>
-        <table class="styled-table">
-            <tr class="styled-table">
-                <thead>
-                    <th>"Good" activities (how your Man and Woman get points)</th>
-                    <th>Points</th>
-                </thead>
-            </tr>
-            <tr>
-            {% for activity in good_activities %}            
-                <TD class="c1">{{ activity.name }}</TD>
-                <TD class="c1">{{ activity.pts }}</TD>
-            </tr>
-            {% endfor %}
-        </table>
-        <table class="styled-table">
-            <tr class="styled-table">
-                <thead>
-                    <th>"Bad" activities (how your Bad News Bears get points)</th>
-                    <th>Points</th>
-                </thead>
-            </tr>
-            <tr>
-            {% for activity in bad_activities %}            
-                <TD class="c1">{{ activity.name }}</TD>
-                <TD class="c1">{{ activity.pts }}</TD>
-            </tr>
-            {% endfor %}
-        </table>
+<table class="styled-table">
+    <tr class="styled-table">
+        <thead>
+            <th>"Good" activities (how your Man and Woman get points)</th>
+            <th>Points</th>
+        </thead>
+    </tr>
+    <tr>
+    {% for activity in good_activities %}            
+        <TD class="c1">{{ activity.name }}</TD>
+        <TD class="c1">{{ activity.pts }}</TD>
+    </tr>
+    {% endfor %}
+</table>
+<table class="styled-table">
+    <tr class="styled-table">
+        <thead>
+            <th>"Bad" activities (how your Bad News Bears get points)</th>
+            <th>Points</th>
+        </thead>
+    </tr>
+    <tr>
+    {% for activity in bad_activities %}            
+        <TD class="c1">{{ activity.name }}</TD>
+        <TD class="c1">{{ activity.pts }}</TD>
+    </tr>
+    {% endfor %}
+</table>
 
 {% endblock %}

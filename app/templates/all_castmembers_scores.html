@@ -6,9 +6,8 @@
 <h1 class="title">{% block title %} Total Scores by Cast member {% endblock %}</h1>
 <body>
 <table id="castmember-table" class="styled-table">
-    <thead>
+    <thead >
         <tr class="styled-table">
-            <th></th>
             <th>Castmember</th>
             <th>Gender</th>
             <th>Good points</th>
@@ -18,7 +17,6 @@
     <tbody>
         {% for castmember in castmembers %}            
             <tr>
-                <td class="c1">{{ castmember.id }}</td>
                 <td class="c2">{{ castmember.name }}</td>
                 <td class="c2">{{ castmember.gender }}</td>
                 <td class="c3">{{ calculate_castmember_points(castmember, "good") }}</td>
@@ -40,11 +38,10 @@
     $(document).ready(function() {
         $('#castmember-table').DataTable({
             columnDefs: [
-                { width: '5%', targets: 0 }, // Adjust the width and target column index as needed
-                { width: '20%', targets: 1 },
-                { width: '10%', targets: 2 },
-                { width: '10%', targets: 3 },
-                { width: '10%', targets: 4 }
+                { width: '50%', targets: 0 },
+                { width: '30%', targets: 1 },
+                { width: '30%', targets: 2 },
+                { width: '30%', targets: 3 }
             ],
             pageLength: 30 // Display 25 rows per page
 
