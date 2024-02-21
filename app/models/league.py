@@ -128,14 +128,14 @@ class Castmember(db.Model):
 
 team_good_members = db.Table(
     "team_good_members",
-    db.Column("team_id"      , db.Integer, db.ForeignKey("Team.id")      , primary_key=True),
-    db.Column("castmember_id", db.Integer, db.ForeignKey("Castmember.id"), primary_key=True)
+    db.Column("team_id"      , db.Integer, db.ForeignKey("Team.id")      ,),
+    db.Column("castmember_id", db.Integer, db.ForeignKey("Castmember.id"),)
 )
 
 team_bad_members = db.Table(
     "team_bad_members",
-    db.Column("team_id"      , db.Integer, db.ForeignKey("Team.id")      , primary_key=True),
-    db.Column("castmember_id", db.Integer, db.ForeignKey("Castmember.id"), primary_key=True)
+    db.Column("team_id"      , db.Integer, db.ForeignKey("Team.id")      , ),
+    db.Column("castmember_id", db.Integer, db.ForeignKey("Castmember.id"), )
 )
 
 class Team(db.Model):

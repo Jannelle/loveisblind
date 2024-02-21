@@ -4,7 +4,8 @@
     Score Episode {{ episode }}
 {% endblock %}
 {% block content %}
-<button id="backup-btn"><a href="/backup">Backup Database</a></button>
+<!-- Removing this button as it doesn't work. To backup the database, run heroku ps:copy: database.db from-heroku.db -->
+<!-- <button id="backup-btn"><a href="/backup">Backup Database</a></button> --> 
 <title>Episode {{ episode }}</title>
 <body>
     <p><b>Attendance:</b></p>

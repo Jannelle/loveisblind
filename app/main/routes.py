@@ -277,5 +277,6 @@ def get_owners():
 
 @bp.route('/backup/')
 def backup_database():
+    
     backup_file_path = '../database.db'
     return send_file(backup_file_path, as_attachment=True)

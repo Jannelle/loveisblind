@@ -11,6 +11,7 @@ def reset_db():
     populate_castmembers()
     populate_leagues()
     populate_episode_one_teams()
+    populate_episode_two_teams()
     db.session.commit()
     
 def populate_leagues():
@@ -103,103 +104,207 @@ def populate_castmembers():
 
 
 def process_league_data(league_data, league_name, episode):
+    
     for owner_name, team_members in league_data.items():
+        # import pdb
+        # pdb.set_trace()
+        
+        print(owner_name, team_members)
         league = League.query.filter_by(name=league_name).one()
 
-
-        owner = Owner(name=owner_name, league_id=league.id)
-        db.session.add(owner)
-
-        good_members = [
-            Castmember.query.filter_by(name=team_members['Man'])  .first().id,
-            Castmember.query.filter_by(name=team_members['Woman']).first().id,
-        ]
-        bad_members = [Castmember.query.filter_by(name=team_members['BadNewsBear']).first().id]
+        owner = Owner.query.filter_by(name=owner_name, league_id=league.id).first()
+        if owner is None:
+            owner = Owner(name=owner_name, league_id=league.id)
+            db.session.add(owner)
         
+        # Combine 'Man', 'Woman', and 'BadNewsBear' lists into one list
+
+        # Collect IDs for all members (including 'Man', 'Woman', and 'BadNewsBear')
+        good_member_names = team_members['Man'] + team_members['Woman']
+        good_members = [
+            member.id
+            for member in Castmember.query.filter(Castmember.name.in_(good_member_names)).all()
+        ]
+
+        
+        # Collect IDs for 'BadNewsBear' members
+        bad_members = [
+            member.id
+            for member in Castmember.query.filter(Castmember.name.in_(team_members['BadNewsBear'])).all()
+        ]
+
         # Create or update team for the owner
         Team.create_or_update_team(owner.id, episode, good_members, bad_members)
-        
         # Append the owner to the league
         league.owners.append(owner)
-        print(owner.teams[0])
 
 
 def populate_episode_one_teams():
-    episode = 1
-    
     # Define owner-team mappings for the friends league
     friends_league_data = {
         "UC": {
-            "Man"         : "Kenneth",
-            "Woman"       : "Danette",
-            "BadNewsBear" : "Nolan"
+            "Man": ["Kenneth"],
+            "Woman": ["Danette"],
+            "BadNewsBear": ["Nolan"]
         },
         "Katie": {
-            "Man"         : "Drake",
-            "Woman"       : "Amy",
-            "BadNewsBear" : "Ben"
+            "Man": ["Drake"],
+            "Woman": ["Amy"],
+            "BadNewsBear": ["Ben"]
         },
         "Marc": {
-            "Man"         : "Matthew",
-            "Woman"       : "Amy C",
-            "BadNewsBear" : "Brittany"
+            "Man": ["Matthew"],
+            "Woman": ["Amy C"],
+            "BadNewsBear": ["Brittany"]
         },
         "Jannelle": {
-            "Man"         : "Ariel",
-            "Woman"       : "Alejandra",
-            "BadNewsBear" : "Trevor"
+            "Man": ["Ariel"],
+            "Woman": ["Alejandra"],
+            "BadNewsBear": ["Trevor"]
         },
         "Monica": {
-            "Man"         : "Clay",
-            "Woman"       : "Sunni",
-            "BadNewsBear" : "Ashley"
+            "Man": ["Clay"],
+            "Woman": ["Sunni"],
+            "BadNewsBear": ["Ashley"]
         }
     }
 
     # Define owner-team mappings for the family league
-    family_league_data = {
+    family_league_data_ep1 = {
         "Jawknee": {
-            "Man"         : "Nolan",
-            "Woman"       : "Chelsea",
-            "BadNewsBear" : "Vince"
+            "Man": ["Nolan"],
+            "Woman": ["Chelsea"],
+            "BadNewsBear": ["Vince"]
         },
         "Jayden": {
-            "Man"         : "Jamal",
-            "Woman"       : "Amy C",
-            "BadNewsBear" : "Austin"
+            "Man": ["Jamal"],
+            "Woman": ["Amy C"],
+            "BadNewsBear": ["Austin"]
         },
         "Jeannette": {
-            "Man"         : "Jimmy",
-            "Woman"       : "Amy",
-            "BadNewsBear" : "Sunni"
+            "Man": ["Jimmy"],
+            "Woman": ["Amy"],
+            "BadNewsBear": ["Sunni"]
         },
         "John Jr.": {
-            "Man"         : "Kenneth",
-            "Woman"       : "Sarah Ann",
-            "BadNewsBear" : "Nolan"
+            "Man": ["Kenneth"],
+            "Woman": ["Sarah Ann"],
+            "BadNewsBear": ["Nolan"]
         },
         "Michelle": {
-            "Man"         : "Vince",
-            "Woman"       : "Brittany",
-            "BadNewsBear" : "AD"
+            "Man": ["Vince"],
+            "Woman": ["Brittany"],
+            "BadNewsBear": ["AD"]
         },
         "Jannelle": {
-            "Man"         : "Johnny",
-            "Woman"       : "Jessica",
-            "BadNewsBear" : "Danette"
+            "Man": ["Johnny"],
+            "Woman": ["Jessica"],
+            "BadNewsBear": ["Danette"]
         },
         "Monica": {
-            "Man"         : "Deion",
-            "Woman"       : "AD",
-            "BadNewsBear" : "Alejandra"
+            "Man": ["Deion"],
+            "Woman": ["AD"],
+            "BadNewsBear": ["Alejandra"]
         },
         "Marc": {
-            "Man"         : "Matthew",
-            "Woman"       : "Mackenzie",
-            "BadNewsBear" : "Laura"
-        },
+            "Man": ["Matthew"],
+            "Woman": ["Mackenzie"],
+            "BadNewsBear": ["Laura"]
+        }
     }
     
-    process_league_data(family_league_data , "family" , episode)
-    process_league_data(friends_league_data, "friends", episode)
+    family_league_data_ep2 = {
+        "Marc": {
+            "Man": ["Clay", "Jimmy"],
+            "Woman": ["Sunni"],
+            "BadNewsBear": ["Matthew"]
+        },
+        "Jawknee": {
+            "Man": ["Nolan", "Trevor"],
+            "Woman": ["Chelsea"],
+            "BadNewsBear": ["Amber"]
+        },
+        "Jayden": {
+            "Man": ["Jamal", "Drake"],
+            "Woman": ["Amy C"],
+            "BadNewsBear": ["Austin"]
+        },
+        "Michelle": {
+            "Man": ["Vince", "Austin"],
+            "Woman": ["Brittany"],
+            "BadNewsBear": ["AD"]
+        },
+        "Jannelle": {
+            "Man": ["Matthew"],
+            "Woman": ["Jessica"],
+            "BadNewsBear": ["Jimmy", "Clay"]
+        },
+        "Monica": {
+            "Man": ["Jimmy"],
+            "Woman": ["AD", "Mackenzie"],
+            "BadNewsBear": ["Clay"]
+        },
+        "Jeannette": {
+            "Man": ["Kenneth", "Ariel"],
+            "Woman": ["Amy"],
+            "BadNewsBear": ["Laura"]
+        },
+        "John Jr.": {
+            "Man": ["Trevor", "Kenneth"],
+            "Woman": ["Sarah Ann"],
+            "BadNewsBear": ["Nolan"]
+        }
+    }
+    Team.query.filter_by(episode = 1).delete()
+    process_league_data(family_league_data_ep1 , "family" , 1)
+    process_league_data(friends_league_data, "friends", 1)
     db.session.commit()
+
+def populate_episode_two_teams():
+    
+    family_league_data_ep2 = {
+        "Marc": {
+            "Man": ["Clay", "Jimmy"],
+            "Woman": ["Sunni"],
+            "BadNewsBear": ["Matthew"]
+        },
+        "Jawknee": {
+            "Man": ["Nolan", "Trevor"],
+            "Woman": ["Chelsea"],
+            "BadNewsBear": ["Amber"]
+        },
+        "Jayden": {
+            "Man": ["Jamal", "Drake"],
+            "Woman": ["Amy C"],
+            "BadNewsBear": ["Austin"]
+        },
+        "Michelle": {
+            "Man": ["Vince", "Austin"],
+            "Woman": ["Brittany"],
+            "BadNewsBear": ["AD"]
+        },
+        "Jannelle": {
+            "Man": ["Matthew"],
+            "Woman": ["Jessica"],
+            "BadNewsBear": ["Jimmy", "Clay"]
+        },
+        "Monica": {
+            "Man": ["Jimmy"],
+            "Woman": ["AD", "Mackenzie"],
+            "BadNewsBear": ["Clay"]
+        },
+        "Jeannette": {
+            "Man": ["Kenneth", "Ariel"],
+            "Woman": ["Amy"],
+            "BadNewsBear": ["Laura"]
+        },
+        "John Jr.": {
+            "Man": ["Trevor", "Kenneth"],
+            "Woman": ["Sarah Ann"],
+            "BadNewsBear": ["Nolan"]
+        }
+    }
+    
+    db.session.commit()
+    process_league_data(family_league_data_ep2 , "family" , 2)
+    db.session.commit()    

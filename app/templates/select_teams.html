@@ -11,23 +11,23 @@
             <tr>
                 <td>
                     <h2>Men</h2>
-                    <select id="man" size="15" style="width: 200px;">
+                    <select id="man" size="15" style="width: 200px;" class="castmemberList">
                         {% for man in men %}
-                            <option value="{{ man.name }}" style="background-color:rgb(93, 212, 99)">{{ man.name }}</option>
+                            <option value="{{ man.name }}" style="background-color:rgb(80, 175, 212)">{{ man.name }}</option>
                         {% endfor %}
                     </select>
                 </td>
                 <td>
                     <h2>Women</h2>
-                    <select id="woman" size="15" style="width: 200px;">
+                    <select id="woman" size="15" style="width: 200px;" class="castmemberList">
                         {% for woman in women %}
-                            <option value="{{ woman.name }}" style="background-color:rgb(236, 236, 192)" >{{ woman.name }}</option>
+                            <option value="{{ woman.name }}" style="background-color:rgb(220, 135, 179)" >{{ woman.name }}</option>
                         {% endfor %}
                     </select>
                 </td>
                 <td>
                     <h2>Bad News Bears</h2>
-                    <select id="bear" size="15" style="width: 200px;">
+                    <select id="bear" size="15" style="width: 200px;" class="castmemberList">
                         {% for bear in castmembers %}
                             <option value="{{ bear.name }}" style="background-color:crimson" >{{ bear.name }}</option>
                         {% endfor %}
@@ -106,17 +106,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 teamList.add(option);
             }
-
+            // Since people can be drafted multiple times now, we're not going to remove
+            // them from the castlist now
             // // If it's not BadNewsBears, remove from the castmember list
             // if (castmemberList !== bear) {
             //     castmemberList.remove(castmemberList.selectedIndex);
             // }
-            castmemberList.remove(castmemberList.selectedIndex);
-            castmemberList.selectedIndex = -1;
+            // castmemberList.remove(castmemberList.selectedIndex);
+            // castmemberList.selectedIndex = -1;
         };
     }
 
-    // Loop for adkding castmembers to a team if the corresponding button is clicked
+    // Loop for adding castmembers to a team if the corresponding button is clicked
     for (var i = 0; i < teamButtons.length; i++) {
         teamButtons[i].addEventListener('click', function () {
             var teamName = this.getAttribute('data-team');
@@ -124,7 +125,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
    
-    // Loop for removinag castmembers from a team if the corresponding remove button is clicked
+    // Loop for removing castmembers from a team if the corresponding remove button is clicked
     for (var i = 0; i < removeButtons.length; i++) {
         removeButtons[i].addEventListener('click', function () {
             var teamName = this.getAttribute('data-team');
@@ -134,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function () {
             var selectedCastmember = teamList.value;
             var role = selectedOption.dataset.role;
             var oldList = document.getElementById(role);
-            
+
             var option = document.createElement('option');
             option.value = selectedCastmember;
             option.text = selectedCastmember;
@@ -148,16 +149,30 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 insertionIndex++;
             }
-            oldList.add(option, insertionIndex);
+            // oldList.add(option, insertionIndex);
             teamList.remove(teamList.selectedIndex);
         });
     }
-
 
     // Add an event listener to the "Save" button
     var saveButton = document.getElementById('saveButton');
     saveButton.addEventListener('click', function () {
         saveTeamLists();
+    });
+
+    // Get all elements with class 'castmemberList'
+    var listBoxes = document.querySelectorAll('.castmemberList');
+
+    // Add event listeners to each listbox
+    listBoxes.forEach(function(listBox) {
+        listBox.addEventListener('click', function() {
+            // Clear the selection of other listboxes
+            listBoxes.forEach(function(otherListBox) {
+                if (otherListBox !== listBox) {
+                    otherListBox.selectedIndex = -1;
+                }
+            });
+        });
     });
 
 });

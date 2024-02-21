@@ -27,7 +27,6 @@ function saveTeamLists() {
             return acc;
         }, {});
         teamsData[teamName] = castmembers;
-        console.log(teamName)
     }
 
     // Include the "episode" variable in the JSON data
@@ -35,7 +34,6 @@ function saveTeamLists() {
         episode: episode,
         teams: teamsData
     };
-
 
     // Send the data to the backend using AJAX
     fetch('/save_teams', {
