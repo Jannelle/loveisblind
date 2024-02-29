@@ -1,0 +1,19 @@
+<div class="header"><h3>{{ header_text }}</h3></div>
+<div class = 'row'>
+    {% for castmember in castmembers %}
+        <div class="castmember" id="{{ castmember.name }}-{{ role }}">
+            {% for i in range(1, instances + 1) %}
+                <div class = "castmember_circle" style = "margin-left: {{8 * i}}px">
+                    <img
+                        class="castmember"
+                        src="{{ url_for('static', filename=castmember.name + '.jpg') }}" 
+                        alt="{{ castmember.name }}"
+                        data-role="{{ role }}"
+                        id="{{ castmember.name }}-{{ role }}{{ i }}"
+                    >
+                </div>
+            {% endfor %}
+            <div class = 'castmember-name'>{{ castmember.name }}</div>
+        </div>
+    {% endfor %}
+</div>

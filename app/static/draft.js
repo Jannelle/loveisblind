@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Sending start event to server
     function startDraft() {
-        socket.emit('start_draft')
+        socket.emit('start_draft');
     }
 
     // Defining how we update the draft order
@@ -66,6 +66,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================ Drafting Castmembers ================ //
     // Event delegation for clicking and drafting a each castmember.
     // Clicking a cast member validates the selection. Then either drafts or shows an error
+
+    // Only make these events if the start has been started
     var castmemberContainer = document.getElementById('castmemberContainer');
     document.querySelectorAll('.castmember img').forEach(img => {
         img.addEventListener('click', processDraftSelection);
@@ -75,9 +77,15 @@ document.addEventListener('DOMContentLoaded', function () {
         if (event.target.classList.contains('castmember')) {
             var castmember = event.target.alt;
             var role = event.target.dataset.role;
+            var instance = event.target.dataset.instance;
+            // NOTE: As of 2/16/2024 all validations are going through as 
+            // we are deciding what the team compositions should be. Plus, we
+            // can always undo if someone drafts incorrectly
             socket.emit('validate_then_draft_castmember', {
                 castmember: castmember,
                 role: role,
+                instance: instance,
+                imageID: event.target.id
             });
         }
     }
@@ -88,32 +96,68 @@ document.addEventListener('DOMContentLoaded', function () {
         showErrorMessage('Error! Trying to draft ' + data.castmember + ' for ' + data.role + ' but already have ' + data.other_castmember + ' in that role.')
     });
 
-    // ====== Updating team data and displays with after drating a castmember ====== //
-    socket.on('update_draft_data', function(data) {
-        
-        // Add new team member to their owner's list in the UI
-        var draftedCastmemberName   = data.drafted_castmember;
-        var draftedCastmemberOption = document.getElementById(draftedCastmemberName + "-" + data.role)
-        var teamOwner               = data.owner;
-        var role                    = data.role;
-        var teamList                = document.getElementById(teamOwner);
+    // ====== Updating team data and displays with after drafting a castmember ====== //
+    function draftCastmember(teamList, imageID, draftedCastmemberName, role) {
+        console.log(draftedCastmemberName)
+        console.log(imageID)
+        // How I'm color coding
+        let rolesDict = {
+            man   : 'lightblue' ,
+            woman : 'pink' ,
+            bear  : 'brown',
+        };
         
         // Make a new option to add to the team list
-        var newOption = document.createElement('option');
-            newOption.value = draftedCastmemberName;
-            newOption.text  = draftedCastmemberName + '-' + role;
-            newOption.id    = draftedCastmemberName + role + 'added';
-            newOption.dataset.role = role;
+        var newOption   = document.createElement('option'); 
+        newOption.text = draftedCastmemberName;
+        newOption.id    = imageID + 'list_option'; // Making sure this ID is different from the image's ID
+        newOption.dataset.role = role;
+        newOption.style.backgroundColor = rolesDict[role]
         teamList.add(newOption);
 
-        // Hide the castmember from being displayed in the list of available castmembers to draft
-        draftedCastmemberOption.style.display = 'none';
+        // In the Friends league, each castmember can only be drafted once across all roles so
+        // hide that castmember from all roles
+        const allRoles = ['man', 'woman', 'bear'];
+        instance = imageID.slice(-1);
+        if (selected_league_id == 1) {
+            for (const newRole of allRoles) {
+                imageToHide = document.getElementById(draftedCastmemberName + '-' + newRole + instance)
+                if (imageToHide !== null) {
+                    hideCastmember(draftedCastmemberName + '-' + newRole + instance)
+                }
+            }
+        } else {
+            hideCastmember(imageID);
+        }
+
         // Once a team member gets drafted, the user can undo
         undoButton.disabled = false;
-    });
+    }
 
-    
-    
+    function hideCastmember(imageID) {
+        var castmemberImage = document.getElementById(imageID)
+        var instance = imageID.slice(-1);
+
+        // Hide the castmember from being displayed in the list of available castmembers to draft
+        castmemberImage.style.visibility = 'hidden';
+        castmemberContainer = castmemberImage.parentElement // This is the circle container
+        castmemberContainer.style.visibility = 'hidden';
+
+        // If this was the last instance, hide the entire container w/ the castmember's name
+        if (instance == 1) {
+            castmemberContainer.parentElement.hidden = true;
+        }
+    }
+
+    socket.on('drafted_castmember', function(data) {
+        draftCastmember(
+            document.getElementById(data.owner),
+            data.image_id,
+            data.drafted_castmember,
+            data.role,
+            )
+    });    
+
     // ================ Undoing a draft selection ================ //
     // ====== Tell the server to undo the last draft selection ====== //    
     var undoButton = document.getElementById('undoButton');
@@ -123,80 +167,49 @@ document.addEventListener('DOMContentLoaded', function () {
     // ====== Update the UI with the un-done selection ====== //    
     socket.on('draft_data_reversed', function (data) {
         var teamList = document.getElementById(data.owner);
-        var castmemberOptionToUnhide = document.getElementById(data.option_to_unhide_id);
-        var castmemberOptionToRemove = document.getElementById(data.option_to_remove_id);
+        castmemberOptionToUnhide = document.getElementById(data.option_to_unhide_id);
+        castmemberOptionToRemove = document.getElementById(data.option_to_remove_id);
         
-        castmemberOptionToUnhide.style.display = 'block'; // Re-add the castmember to the container
+        draftedCastmemberContainer      = castmemberOptionToUnhide  .parentElement;
+        draftedCastmemberGroupContainer = draftedCastmemberContainer.parentElement;
+    
+        draftedCastmemberGroupContainer.style.visibility = 'visible'
+        castmemberOptionToUnhide       .style.visibility = 'visible'
+        draftedCastmemberContainer     .style.visibility = 'visible'
+        draftedCastmemberGroupContainer.hidden = false;
+        
+        // Remove the castmember option from the team list
         castmemberOptionToRemove.remove();
-        
-        updateTurnIndicator(data.current_round, data.current_owner)
-        updateDraftOrder   (data.draft_order)
-    })
+    });
     
     socket.on('disable_undo', function() {
         undoButton.disabled = true
     })
 
+    // Since we don't how many rounds there will be, turn this off
+    // and keep the save button enabled by default
     // ================ Ending the draft ================ //
-    socket.on('end_draft', function () {
-        // Shows draft completed message
-        // Creates save button
-        var saveButton = document.createElement('button');
-        saveButton.textContent = 'Save';
-        saveButton.id = 'saveButton';
-        document.getElementById('startDraftDiv').appendChild(saveButton);
+    // socket.on('end_draft', function () {
+    //     // Shows draft completed message
+    //     // Creates save button if it doesn't exist
+    //     var saveButton = document.getElementById('saveButton')
+    //     if (saveButton == undefined) {
+    //         document.createElement('button');
+    //         saveButton.textContent = 'Save';
+    //         saveButton.id = 'saveButton';
+    //         document.getElementById('startDraftDiv').appendChild(saveButton);
     
-        // Add an event listener to the "Save" button
-        saveButton.addEventListener('click', function () {
-            saveTeamLists();
-        });
-    })
+    //     // Add an event listener to the "Save" button
+    //     saveButton.addEventListener('click', function () {
+    //         saveTeamLists();
+    //     });
+    //     }
+    // })
+    saveButton.addEventListener('click', function () {
+        saveTeamLists();
+    });
+
     
-
-    // ================ Saving the teams ================ //
-    function saveTeamLists() {
-        var teamLists = document.getElementsByClassName('teamList');
-        var teamsData = [];
-        var errors = [];
-
-        for (var i = 0; i < teamLists.length; i++) {
-            var ownerName = teamLists[i].getAttribute('id');
-            var newTeamData = { 'name' : ownerName };
-        
-            Array.from(teamLists[i].options).forEach(option => {
-                var role = option.dataset.role;
-                var value = option.value;
-                newTeamData[role] = value;
-            });
-        
-            teamsData.push(newTeamData);
-        }
-
-        // Include the "episode" variable in the JSON data
-        var requestData = {
-            episode: episode,
-            teams: teamsData
-        };
-
-        // Send the data to the backend using AJAX
-        fetch('/save_drafted_team', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestData),
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                showConfirmationMessage('Data saved successfully!');
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                showErrorMessage('Error saving data. Please try again.');
-            });
-    }
-
     // ================ Resetting the draft ================ //
     socket.on('reset_draft', function resetDraft(data) {
         
@@ -215,41 +228,12 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         
             // Show all hidden castmembers
-            var hiddenCastmembers = document.querySelectorAll('.castmember[style="display: none;"]');
+            var hiddenCastmembers = document.querySelectorAll('.castmember[hidden="true"]');
             hiddenCastmembers.forEach(function(castmember) {
-                castmember.style.display = 'block';
+                castmember.style.visibility = 'visible';
             });
-            startDraft();
         }
     });
-
-
-    // ================ Messages ================ //
-    // Function to show an error message
-    function showErrorMessage(message) {
-        // Display the error message (you can customize this part)
-        var errorDiv = document.getElementById('errorMessage');
-        errorDiv.textContent = message;
-        errorDiv.style.display = 'block';
-
-        // Hide the message after a few seconds (you can adjust the timeout)
-        setTimeout(function () {
-            errorDiv.style.display = 'none';
-        }, 8000); // Hide after 3 seconds
-    }
-    
-    function showConfirmationMessage(message) {
-        // Display the confirmation message (you can customize this part)
-        var confirmationDiv = document.getElementById('confirmationMessage');
-        confirmationDiv.textContent = message;
-        confirmationDiv.style.display = 'block';
-    
-        // Hide the message after a few seconds (you can adjust the timeout)
-        setTimeout(function () {
-            confirmationDiv.style.display = 'none';
-        }, 3000); // Hide after 3 seconds
-    };
-
 
     function populateTeams() {  
         
@@ -260,28 +244,42 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(response => response.json())
             .then(data => {
                 if (data.teams) {
-                // Update team lists with the fetched data
-                data.teams.forEach(team => {
-                    var teamList = document.getElementById(team.name);
-                    teamList.innerHTML = '';  // Clear existing options
-    
-                    for (const [role, castmember] of Object.entries(team.castmembers)) {
-                        var option   = document.createElement('option');
-                        option.text  = castmember + ' ' + role;
-                        option.value = castmember;
-                        option.id    = castmember + role + 'added';
-                        option.dataset.role = role; // Store the role in dataset
-                        teamList.add(option);
-    
-                        // Remove the castmember from the corresponding old list
-                        var oldList = document.getElementById(role);
-                        var castmemberOption = document.getElementById(castmember + "-" + role);
-                        castmemberOption.style.display = 'none'; // Re-add the castmember to the container
-                    }
-                })
-                showErrorMessage('Teams already drafted!');
-                startDraftButton.disabled = true
-            }})
+                    // Update team lists with the fetched data
+                    data.teams.forEach(team => {
+                        var teamList = document.getElementById(team.name);
+                        teamList.innerHTML = '';  // Clear existing options
+                        for (const [role, castmembers] of Object.entries(team.castmembers)) {
+                            for (const castmember of castmembers) {
+                                // Figure out what instance of the image we should be hiding
+                                // Starting at 3 because there are a max of 2 instances
+                                let foundImages = document.querySelectorAll('img[id^=' + castmember.replace(/\s/g, '\\ ') + '-' + role);
+                                var instance = foundImages.length;
+                                
+                                foundImageToHide = false
+                                let imageID = `${castmember}-${role}${instance}`
+                                while (instance >= 1 && !foundImageToHide) {
+                                    let image   = document.getElementById(imageID);
+                                    if (image && !image.hidden) {
+                                        // Element exists and is visible, do something with it
+                                        foundImageToHide = true; // Exit the loop
+                                    }
+                                    // Decrement the instance for the next iteration
+                                    instance--;
+                                }
+                                
+                                draftCastmember(
+                                    teamList,
+                                    imageID,
+                                    castmember,
+                                    role,
+                                    )
+                                showErrorMessage('Teams already drafted!');
+                                startDraftButton.disabled = true
+                            }
+                        }
+                    })
+                }
+            })
             .catch((error) => {
                 console.error('Error:', error);
             });

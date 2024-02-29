@@ -3,11 +3,12 @@
 {% block title %}
     Score Episode {{ episode }}
 {% endblock %}
-
 {% block content %}
-    <title>Episode {{ episode }}</title>
+<!-- Removing this button as it doesn't work. To backup the database, run heroku ps:copy: database.db from-heroku.db -->
+<!-- <button id="backup-btn"><a href="/backup">Backup Database</a></button> --> 
+<title>Episode {{ episode }}</title>
 <body>
-    <b>Attendance:</b>
+    <p><b>Attendance:</b></p>
     <form action="/score_episode/{{ episode }}" method="POST">
         <span style="font-size: 14px">
         {% for owner in owners %}
@@ -16,116 +17,39 @@
         </span>
         <button type="submit">Submit</button>
     </form>
-
-<!-- Men/Women table -->
-    <table class="styled-table">
-        <thead>
-            <th style="text-align: center; background-color: darkblue; color: white;"></th></th>
-            <th colspan="{{ roles_dict['Men'].all() | length }}" style="text-align: center; background-color: darkblue; color: white;">Men</th>
-            <th colspan="{{ roles_dict['Women'].all() | length }}" style="text-align: center; background-color: darkblue; color: white;">Women</th>
-            <tr>
-                <th></th>
-                <!-- Men table -->
-                {% for man in roles_dict['Men'].all() %}
-                    {% if not loop.last %}
-                    <th class="styled-table">{{ man.name }}</th>
-                    {% else %}
-                    <th class="styled-table" style="border-right: 3px solid darkblue;">{{ man.name }}</th>
-                    {% endif %}
-                {% endfor %}
-
-                <!-- Women table -->
-                {% for woman in roles_dict['Women'].all() %}
-                    <th class="styled-table">{{ woman.name }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        {% for activity in activities %}
-            {% if activity.type == "good" %}
-                <tr>
-                    <td>
-                        {{ activity.name }}
-                    </td>
-                    {% for man in roles_dict['Men'].all() %}
-                        {% if not loop.last %}
-                        <td>
-                            <button class="update-button" data-castmember="{{ man.id }}" data-activity="{{ activity.id }}">
-                                <span class="activity-count">{{ man.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
-                            </button>
-                            <button class="minus-button" data-castmember="{{ man.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
-                                -
-                            </button>
-                        </td>
-                        {% else %}
-                        <td style="border-right: 3px solid darkblue;">
-                            <button class="update-button" data-castmember="{{ man.id }}" data-activity="{{ activity.id }}">
-                                <span class="activity-count">{{ man.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
-                            </button>
-                            <button class="minus-button" data-castmember="{{ man.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
-                                -
-                            </button>
-                        </td>
-                        {% endif %}
-                    {% endfor %}
-                    {% for woman in roles_dict['Women'].all() %}
-                        <td>
-                            <button class="update-button" data-castmember="{{ woman.id }}" data-activity="{{ activity.id }}">
-                                <span class="activity-count">{{ woman.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
-                            </button>
-                            <button class="minus-button" data-castmember="{{ woman.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
-                                -
-                            </button>
-                        </td>
-                    {% endfor %}
-                </tr>
-            {% endif %}
-        {% endfor %}
-    </table>
-    
-<!-- Bad News Bear table -->
-<table class="styled-table">
-    <thead>
-        <th style="text-align: center; background-color: darkblue; color: white;"></th></th>
-        <th colspan="{{ roles_dict['Bad News Bears'].all() | length }}" style="text-align: center; background-color: darkblue; color: white;">Bad News Bear</th>
-    </thead>
-    <thead>
-        <th></th>
-        {% for bear in roles_dict['Bad News Bears'].all() %}
-        <th class="styled-table">{{ bear.name }}</th>
-        {% endfor %}
-    </thead>
-    {% for activity in activities %}
-        {% if activity.type == "bad" %}
-            <tr>
-                <td>
-                    {{ activity.name }}
-                </td>
-                {% for bear in roles_dict['Bad News Bears'].all() %}
-                    <td>
-                        <button class="update-button" data-castmember="{{ bear.id }}" data-activity="{{ activity.id }}">
-                            <span class="activity-count">{{ bear.activity_association.filter_by(episode=episode, activity=activity).all() | length }}</span>
-                        </button>
-                        <button class="minus-button" data-castmember="{{ bear.id }}" data-activity="{{ activity.id }}" style="background-color: darkred;">
-                            -
-                        </button>
-                    </td>
-                {% endfor %}
-            </tr>
+<div class="container" style="display:flex;">
+    {% for key, value in roles_dict.items() %}
+        {% if key != 'Bad News Bears' %}
+            {% set activity_type = "good" %}
+        {% else %}
+            {% set activity_type = "bad" %}
         {% endif %}
+        {% with castmember_list=value.all(), role=key %}
+            {% include 'table_for_scoring.html'  %}
+        {% endwith %}
     {% endfor %}
-</table>
-    
+</div>
 
 <script src="https://cdn.socket.io/4.6.0/socket.io.min.js" integrity="sha384-c79GN5VsunZvi+Q/WObgk2in0CbZsHnjEqvFxC5DxHn9lTfNce2WW6h2pH6u/kF+" crossorigin="anonymous"></script>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        var episode = "{{ episode }}"; // Include the episode variable from the Flask template
-        var updateButtons = document.querySelectorAll('.update-button');
-        var minusButtons  = document.querySelectorAll('.minus-button' );
-        
+        var episode         = "{{ episode }}"; // Include the episode variable from the Flask template
+        var activityButtons = document.querySelectorAll('.activity-buttons');
+        var updateButtons   = document.querySelectorAll('.update-button');
+        var minusButtons    = document.querySelectorAll('.minus-button' );
+        var dropdowns       = document.getElementsByClassName('castmember-dropdown');        
+
         // Connect to the server via SocketIO
         var socket = io.connect();
+        var castmemberContainers = document.querySelectorAll('.castmember-container');
 
+        // Event listener for cast member elements
+        castmemberContainers.forEach(function(container) {
+            container.parentElement.addEventListener('click', function() {
+                // Toggle visibility of corresponding container
+                container.style.display = container.style.display === 'none' ? 'block' : 'none';
+            });
+        });
         // Function to handle button clicks (both increment and decrement)
         function handleButtonClick(button, increment) {
             var castmember_id = button.getAttribute('data-castmember');
@@ -161,7 +85,36 @@
             var currentCount = parseInt(countSpan.innerText);
             countSpan.innerText = data.increment ? currentCount + 1 : Math.max(currentCount - 1, 0);
         });
+
+    
+        // Iterate over each dropdown and attach the event listener
+        for (var i = 0; i < dropdowns.length; i++) {
+            dropdowns[i].addEventListener('change', function() {
+                showButtonsForCastmember(this)
+            })
+        };
+
+        function showButtonsForCastmember(dropdown) {
+            var castmemberId = dropdown.value;
+            role = dropdown.dataset.role
+            activityButtons.forEach(function(buttonContainer) {
+                var castmemberButtons = buttonContainer.querySelectorAll('button');
+                castmemberButtons.forEach(function(button) {
+                    
+                    if ( button.getAttribute('data-role') === role ) {
+                        if (button.getAttribute('data-castmember') === castmemberId) {
+                            button.style.display = 'inline-block'; // Show the buttons for the selected cast member
+                        } else {
+                            
+                        button.style.display = 'none'; // Hide buttons for other cast members
+                        }
+                    }
+                });
+            });
+        }
+        
     });     
+
 </script>
 {% endblock %}
 </body>

@@ -11,23 +11,23 @@
             <tr>
                 <td>
                     <h2>Men</h2>
-                    <select id="man" size="15" style="width: 200px;">
+                    <select id="man" size="15" style="width: 200px;" class="castmemberList">
                         {% for man in men %}
-                            <option value="{{ man.name }}" style="background-color:rgb(93, 212, 99)">{{ man.name }}</option>
+                            <option value="{{ man.name }}" style="background-color:rgb(80, 175, 212)">{{ man.name }}</option>
                         {% endfor %}
                     </select>
                 </td>
                 <td>
                     <h2>Women</h2>
-                    <select id="woman" size="15" style="width: 200px;">
+                    <select id="woman" size="15" style="width: 200px;" class="castmemberList">
                         {% for woman in women %}
-                            <option value="{{ woman.name }}" style="background-color:rgb(236, 236, 192)" >{{ woman.name }}</option>
+                            <option value="{{ woman.name }}" style="background-color:rgb(220, 135, 179)" >{{ woman.name }}</option>
                         {% endfor %}
                     </select>
                 </td>
                 <td>
                     <h2>Bad News Bears</h2>
-                    <select id="bear" size="15" style="width: 200px;">
+                    <select id="bear" size="15" style="width: 200px;" class="castmemberList">
                         {% for bear in castmembers %}
                             <option value="{{ bear.name }}" style="background-color:crimson" >{{ bear.name }}</option>
                         {% endfor %}
@@ -54,7 +54,7 @@
                 {% for owner in owners %}
                     <td>
                         <h3>{{ owner.name }}</h3>
-                        <select class="teamList" size="5" style="width: 200px;" data-team="{{ owner.name }}"></select>
+                        <select class="teamList" size="5" style="width: 200px;" id="{{ owner.name }}"></select>
                         <button class="teamButton" data-team="{{ owner.name }}">Add to {{ owner.name }}</button>
                         <p><button class="removeButton" data-team="{{ owner.name }}">Remove from {{ owner.name }}</button></p>
                     </td>
@@ -63,86 +63,13 @@
         </div>
     </div>
 
-    <button id="saveButton">Save</button>
-
+<button id="saveButton">Save</button>
+<script src="{{ url_for('static', filename='saveTeamLists.js') }}"></script>
+<script src="{{ url_for('static', filename='populateTeams.js') }}"></script>
+<script src="{{ url_for('static', filename='messages.js') }}"></script>
 <script>
 // JavaScript code to handle castmember selection and team assignment
 var episode = "{{ episode }}"; // Include the episode variable from the Flask template
-
-// Function to show an error message
-function showErrorMessage(message) {
-    // Display the error message (you can customize this part)
-    var errorDiv = document.getElementById('errorMessage');
-    errorDiv.textContent = message;
-    errorDiv.style.display = 'block';
-
-    // Hide the message after a few seconds (you can adjust the timeout)
-    setTimeout(function () {
-        errorDiv.style.display = 'none';
-    }, 5000); // Hide after 3 seconds
-}
-
-function populateTeams() {
-    var copyFromEpisode = document.getElementById('copyFromEpisode');
-    var selectedEpisode = copyFromEpisode.value;
-    if (selectedEpisode === "") {
-        selectedEpisode = episode
-    };
-
-    // Fetch teams data for the selected episode from the backend
-    fetch('/get_teams?episode=' + selectedEpisode)
-        .then(response => response.json())
-        .then(data => {
-            // Update team lists with the fetched data
-            data.teams.forEach(team => {
-                var teamList = document.querySelector('.teamList[data-team="' + team.name + '"]');
-                teamList.innerHTML = '';  // Clear existing options
-
-                for (const [oldListName, castmember] of Object.entries(team.castmembers)) {
-                    var option = document.createElement('option');
-                    option.text = castmember;
-                    option.value = castmember;
-                    if (oldListName == "man") {
-                        option.style.backgroundColor = 'rgb(93, 212, 99)'
-                    } else if (oldListName == "woman") {
-                        option.style.backgroundColor = 'rgb(236, 236, 192)'
-                    } else if (oldListName == "bear") {
-                        option.style.backgroundColor = 'crimson'
-                    }
-                    option.dataset.oldListName = oldListName; // Store the role in dataset
-                    teamList.add(option);
-
-                    // Remove the castmember from the corresponding old list
-                    var oldList = document.getElementById(oldListName);
-                    for (var j = 0; j < oldList.options.length; j++) {
-                        if (oldList.options[j].value === castmember) {
-                            oldList.remove(j);
-                            break;
-                        }
-                }
-            }
-        });
-            showConfirmationMessage('Teams copied successfully!');
-        })
-        .catch((error) => {
-            if (copyFromEpisode.value !== "") {
-                console.error('Error:', error);
-                showErrorMessage('Error copying teams. Please try again.');
-            }
-        });
-};
-
-function showConfirmationMessage(message) {
-    // Display the confirmation message (you can customize this part)
-    var confirmationDiv = document.getElementById('confirmationMessage');
-    confirmationDiv.textContent = message;
-    confirmationDiv.style.display = 'block';
-
-    // Hide the message after a few seconds (you can adjust the timeout)
-    setTimeout(function () {
-        confirmationDiv.style.display = 'none';
-    }, 3000); // Hide after 3 seconds
-};
 
 document.addEventListener('DOMContentLoaded', function () {
     var man = document.getElementById('man');
@@ -163,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     
     function assignToTeam(teamName) {
-        var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
+        var teamList = document.getElementById(teamName)
 
         for (var i = 0; i < 3; i++) {
             var castmemberList = castmember_lists[i];
@@ -175,21 +102,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 option.text = selectedOption.value;
                 option.value = option.text;
                 option.style.backgroundColor = selectedOption.style.backgroundColor;
-                option.dataset.oldListName = oldListName;
+                option.dataset.role = oldListName;
 
                 teamList.add(option);
             }
-
+            // Since people can be drafted multiple times now, we're not going to remove
+            // them from the castlist now
             // // If it's not BadNewsBears, remove from the castmember list
             // if (castmemberList !== bear) {
             //     castmemberList.remove(castmemberList.selectedIndex);
             // }
-            castmemberList.remove(castmemberList.selectedIndex);
-            castmemberList.selectedIndex = -1;
+            // castmemberList.remove(castmemberList.selectedIndex);
+            // castmemberList.selectedIndex = -1;
         };
     }
 
-    // Loop for adkding castmembers to a team if the corresponding button is clicked
+    // Loop for adding castmembers to a team if the corresponding button is clicked
     for (var i = 0; i < teamButtons.length; i++) {
         teamButtons[i].addEventListener('click', function () {
             var teamName = this.getAttribute('data-team');
@@ -197,17 +125,17 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
    
-    // Loop for removinag castmembers from a team if the corresponding remove button is clicked
+    // Loop for removing castmembers from a team if the corresponding remove button is clicked
     for (var i = 0; i < removeButtons.length; i++) {
         removeButtons[i].addEventListener('click', function () {
             var teamName = this.getAttribute('data-team');
-            var teamList = document.querySelector('.teamList[data-team="' + teamName + '"]');
+            var teamList = document.getElementById(teamName);
 
             var selectedOption = teamList.options[teamList.selectedIndex];
             var selectedCastmember = teamList.value;
-            var oldListName = selectedOption.dataset.oldListName;
-            var oldList = document.getElementById(oldListName);
-            
+            var role = selectedOption.dataset.role;
+            var oldList = document.getElementById(role);
+
             var option = document.createElement('option');
             option.value = selectedCastmember;
             option.text = selectedCastmember;
@@ -221,11 +149,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
                 insertionIndex++;
             }
-            oldList.add(option, insertionIndex);
+            // oldList.add(option, insertionIndex);
             teamList.remove(teamList.selectedIndex);
         });
     }
-
 
     // Add an event listener to the "Save" button
     var saveButton = document.getElementById('saveButton');
@@ -233,105 +160,25 @@ document.addEventListener('DOMContentLoaded', function () {
         saveTeamLists();
     });
 
-    function saveTeamLists() {
-        var teamLists = document.getElementsByClassName('teamList');
-        var teamsData = {};
-        var errors = [];
+    // Get all elements with class 'castmemberList'
+    var listBoxes = document.querySelectorAll('.castmemberList');
 
-        for (var i = 0; i < teamLists.length; i++) {
-            var teamName = teamLists[i].getAttribute('data-team');
-            validationResults = validateTeamList(teamName, teamLists[i])
-            if (validationResults) {
-                errors.push(validationResults)
-            }
-            
-            var castmembers = Array.from(teamLists[i].options).reduce((acc, option) => {
-                acc[option.dataset.oldListName] = option.value;
-                return acc;
-            }, {});
-            teamsData[teamName] = castmembers;
-        }
-        if (errors.length > 0) {
-            var errorMessage = errors.join("\r\n"); // Concatenate errors into one string
-            showErrorMessage(errorMessage);
-            return
-        };
-
-        // Include the "episode" variable in the JSON data
-        var requestData = {
-            episode: episode,
-            teams: teamsData
-        };
-        
-        // Send the data to the backend using AJAX
-        fetch('/save_teams', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestData),
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Success:', data);
-                showConfirmationMessage('Data saved successfully!');
-            })
-            .catch((error) => {
-                console.error('Error:', error);
-                showErrorMessage('Error saving data. Please try again.');
+    // Add event listeners to each listbox
+    listBoxes.forEach(function(listBox) {
+        listBox.addEventListener('click', function() {
+            // Clear the selection of other listboxes
+            listBoxes.forEach(function(otherListBox) {
+                if (otherListBox !== listBox) {
+                    otherListBox.selectedIndex = -1;
+                }
             });
-    }
-
-    function validateTeamList(teamName, teamList) {
-        // Create an object to store options for each origin_list
-        var optionsByOriginList = {};
-        // Iterate over the options and group them by origin_list
-        Array.from(teamList.options).forEach(option => {
-            var originList = option.dataset.oldListName;
-            if (!optionsByOriginList[originList]) {
-                optionsByOriginList[originList] = [];
-            }
-            optionsByOriginList[originList].push(option.value);
         });
-        
-        // Check for multiple options for "man", "woman", and "bear" for each origin_list
-        var errors = []
+    });
 
-        manOptions = optionsByOriginList['man']
-        if (!manOptions) {
-            errors.push('Team ' + teamName + ' is missing a man.')
-        } else if (manOptions.length != 1) {
-            manOptionsText = optionsByOriginList['man'].join(', ');
-            errors.push('Team ' + teamName + ' has ' + manOptions.length + ' men: ' + manOptionsText + '.');
-        } 
-        
-        womanOptions = optionsByOriginList['woman']
-        if (!womanOptions) {
-            errors.push('Team ' + teamName + ' is missing a woman.')
-        } else if (womanOptions.length > 1) {
-            womanOptionsText = optionsByOriginList['woman'].join(', ');
-            errors.push('Team ' + teamName + ' has ' + womanOptions.length + ' women: ' + womanOptionsText + '.');
-        } 
-        
-        bearOptions = optionsByOriginList['bear']
-        if (!bearOptions) {
-            errors.push('Team ' + teamName + ' is missing a Bad News Bear.')
-        } else if (bearOptions.length > 1) {
-            bearOptionsText = optionsByOriginList['bear'].join(', ');
-            errors.push('Team ' + teamName + ' has ' + bearOptions.length + ' bears: ' + bearOptionsText + '.');
-        }
-        
-        if (errors.length > 0) {
-            return errors.join('\r\n');
-        }
-    }
 });
-
 populateTeams()
-
-
-
 </script>
+
 
 {% endblock %}
 </body>

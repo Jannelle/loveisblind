@@ -14,7 +14,17 @@ def set_default_league_id(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@set_default_league_id
+
+@bp.app_template_global()
+def leagues():
+    from app.models.league import League
+    '''Returns all leagues in the database. This is used to fill leagues dropdown in base.html'''
+    all_leagues = League.query.all()
+
+    return all_leagues
+
+
+@bp.app_template_global()
 def calculate_team_points(team):
     '''Calculates how many points a team has. It does so by looping through each Castmember in the team.'''
     
@@ -25,12 +35,11 @@ def calculate_team_points(team):
         total_points += 10
 
     # Doing a separate loop for the man and woman compared to bear since they require different activity types
-    for castmember in [team.man, team.woman]:
-        if castmember: # skip if the castmember is None (this shouldn't happen in practice, but happens during testing)
-            total_points += calculate_castmember_points(castmember, "good", team.episode)
+    for castmember in team.good_members:
+        total_points += calculate_castmember_points(castmember, "good", team.episode)
         
-    if team.bear: # skip if team has no Bad News Bear
-        total_points += calculate_castmember_points(team.bear, "bad", team.episode)
+    for castmember in team.bad_members: # skip if team has no Bad News Bear
+        total_points += calculate_castmember_points(castmember, "bad", team.episode)
 
     return total_points
 
