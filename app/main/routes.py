@@ -38,7 +38,7 @@ def all_castmembers_scores():
 @set_default_league_id
 def get_teams():
     selected_league_id = session.get('selected_league_id')
-    episode            = int(request.args.get('episode', 0))
+    episode            = request.args.get('episode', 0)
     teams              = Team.query.filter_by(episode = episode).join(Owner).filter(Owner.league_id == selected_league_id).all()
     
     if len(teams) > 0:
@@ -58,7 +58,7 @@ def get_teams():
     else:
         return jsonify({"message" : "No teams found for this episode!"})
 
-@bp.route('/score_episode/<int:episode>', methods = ('GET', 'POST'))
+@bp.route('/score_episode/<episode>', methods = ('GET', 'POST'))
 @set_default_league_id
 def score_episode(episode):
     selected_league_id = session.get('selected_league_id')
@@ -105,14 +105,18 @@ def score_episode(episode):
     # Redirect to the GET route for displaying the updated scores
     return redirect(url_for('.score_episode', episode = episode))
 
-@bp.route('/select_teams/<int:episode>')
+@bp.route('/select_teams/<episode>')
 @set_default_league_id
 def select_teams(episode):
     selected_league_id = session.get('selected_league_id')
     
     castmembers = Castmember.query.order_by(Castmember.name).all()
-    men         = Castmember.query.filter_by(gender = 'male'  )
-    women       = Castmember.query.filter_by(gender = 'female')
+    men         = Castmember.query.filter_by(gender = 'male'  ).all()
+    women       = Castmember.query.filter_by(gender = 'female').all()
+    print(len(women))
+    print(len(women))
+    print(len(women))
+    
     owners      = Owner     .query.filter_by(league_id = selected_league_id).order_by(Owner.name).all()
     
     return render_template('select_teams.html'

@@ -172,17 +172,27 @@
             <select id="createTeamSelect" name="createTeam" onchange="updateActionCreateTeam()">
                 <option value="" selected disabled>Select an Episode</option>
                 {% for episode_number in range(1, 13) %}
-                    <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
+                    {% if episode_number == 5 %}
+                        <option value="{{ episode_number }} - pre-engagements">Episode {{ episode_number }} - pre-engagements</option>
+                        <option value="{{ episode_number }} - post-engagements">Episode {{ episode_number }} - post-engagements</option>
+                    {% else %}
+                        <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
+                    {% endif %}
                 {% endfor %}
             </select>
         </form>
-
+        
         <form method="get" id="episodeForm" style="margin-right: 50px;">
             <label for="episodeSelect">Score episode:</label>
-            <select id="episodeSelect", name="episode" onchange="updateAction()">
+            <select id="episodeSelect" name="episode" onchange="updateAction()">
                 <option value="" selected disabled>Select an Episode</option>
                 {% for episode_number in range(1, 13) %}
-                    <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
+                    {% if episode_number == 5 %}
+                        <option value="{{ episode_number }}">Episode {{ episode_number }} - Pre-engagement</option>
+                        <option value="{{ episode_number }}-post-engagement">Episode {{ episode_number }} - Post-engagement</option>
+                    {% else %}
+                        <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
+                    {% endif %}
                 {% endfor %}
             </select>
         </form>
@@ -220,16 +230,18 @@
         // Retrieve the selected episode from the URL
         var new_url         = window.location.pathname.split('/')
         var new_url_episode = new_url.pop()
+        new_url_episode     = new_url_episode.replace(/%20/g, " ")
         var new_url_link    = new_url.pop()
+        
         // Set the selected episode in the dropdown if it exists
         if (new_url_episode) {
             if (new_url_link == 'score_episode') {
                 episodeSelect.value    = new_url_episode;
-                createTeamSelect.value = '';
+                createTeamSelect.value = 'Select an Episode';
             }
             if (new_url_link == 'select_teams') {
                 createTeamSelect.value = new_url_episode;
-                episodeSelect.value    = '';
+                episodeSelect.value    = 'Select an Episode';
             }
             
         }

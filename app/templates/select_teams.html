@@ -21,7 +21,7 @@
                     <h2>Women</h2>
                     <select id="woman" size="15" style="width: 200px;" class="castmemberList">
                         {% for woman in women %}
-                            <option value="{{ woman.name }}" style="background-color:rgb(220, 135, 179)" >{{ woman.name }}</option>
+                            <option value="{{ woman.name }}" style="background-color:rgb(220, 135, 179)">{{ woman.name }}</option>
                         {% endfor %}
                     </select>
                 </td>
@@ -38,8 +38,13 @@
                 <label for="copyFromEpisode">Copy Teams from Episode:</label>
                 <select id="copyFromEpisode" onchange="populateTeams()">
                     <option value="" selected disabled>Select an Episode</option>
-                    {% for episode_number in range(1, 13) %}
-                        <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
+                    {% for episode_number in range(1, 14) %}
+                        {% if episode_number == 5 %}
+                            <option value="{{ episode_number }} - pre-engagements">Episode {{ episode_number }} - pre-engagements</option>
+                            <option value="{{ episode_number }} - post-engagements">Episode {{ episode_number }} - post-engagements</option>
+                        {% else %}
+                            <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
+                        {% endif %}
                     {% endfor %}
                 </select>
                 </td>

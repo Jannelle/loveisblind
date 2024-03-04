@@ -7,6 +7,7 @@ function populateTeams() {
     if (selectedEpisode === "" || selectedEpisode == undefined) {
         selectedEpisode = episode
     };
+    
     // Fetch teams data for the selected episode from the backend
     fetch('/get_teams?episode=' + selectedEpisode)
         .then(response => response.json())
@@ -23,7 +24,7 @@ function populateTeams() {
                         if (role == "man") {
                             option.style.backgroundColor = 'rgb(80, 175, 212)'
                         } else if (role == "woman") {
-                            option.style.backgroundColor = 'rgb(220, 135, 179'
+                            option.style.backgroundColor = 'rgb(220, 135, 179)'
                         } else if (role == "bear") {
                             option.style.backgroundColor = 'crimson'
                         }

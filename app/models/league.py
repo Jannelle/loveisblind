@@ -51,7 +51,7 @@ class Viewing(db.Model):
 
     Attributes:
         id      (int) : The unique identifier for the viewing event.
-        episode (int) : The episode number associated with the viewing event.
+        episode (float) : The episode number associated with the viewing event.
         owners (relationship): Relationship to Owner table through viewing_owner_association table.
     """    
     __tablename__ = 'Viewing'
