@@ -61,15 +61,70 @@ def get_teams():
 @bp.route('/score_episode/<episode>', methods = ('GET', 'POST'))
 @set_default_league_id
 def score_episode(episode):
+    from sqlalchemy import func
     selected_league_id = session.get('selected_league_id')
     
     if request.method == 'GET':
-        activities = Activity.query.all()
-        owners    = League.query.filter_by(id = selected_league_id).one().owners
 
-        men   = Castmember.query.filter_by(gender = 'male'  ) # Castmember.query.join(Team, (Team.man_id   == Castmember.id) & (Team.episode == episode))
-        women = Castmember.query.filter_by(gender = 'female') # Castmember.query.join(Team, (Team.woman_id == Castmember.id) & (Team.episode == episode))
-        bears = Castmember.query # Castmember.query.join(Team, (Team.bear_id  == Castmember.id) & (Team.episode == episode))
+        # Assuming you have a list of activity names
+        activity_order = [
+            "Miscellaneous 'Awww' moments",
+            "Maturely handled a situation with another cast member",
+            "Happy cried",
+            "Did a sweet/romantic gesture for their partner",
+            "Said “I love you” to date/partner or vice versa",
+            "Had sex with their partner",
+            "Gave/received a gift",
+            "Created/performed some type of art",
+            "Another castmember finds them attractive",
+            "Got their partner’s friends/family’s blessing",
+            "Post-engagement, had a romantic date",
+            "Another castmember said they wish they were with them/chose them",
+            "Showed self-improvement or had a self-realization",
+            "Apologized for something they did wrong",
+            "Defended their partner to others",
+            "Rejected flirtations/advancements from non-partner",
+            "Consoled or supported another castmember ",
+            "Said “I do” on their wedding day",  
+            "Partner said “I do” on their wedding day",
+            "Got called, someone's #1/only choice/interest",
+            "Said they're 'falling for' partner (or vice versa)",
+            "Proposed or got proposed to",
+            "Got engaged (i.e., the proposal was accepted)",
+
+            "Miscellaneous scandalous thing",
+            "Sad/angry cried",
+            "Argued with partner",
+            "Yelled at/insulted their partner",
+            "Talked shit about someone else or got talked shit about",
+            "Walked out during a date without saying bye",
+            "After being engaged, flirted with someone who isn’t their partner",
+            "Broke up with partner (post-engagement)",
+            "Cheated on their partner",
+            "Family/friends didn't like their partner",
+            "Tried to change/control how partner looks",
+            "Did/said something cringe",
+            "Backpedaled on something they said in the pods",
+            "Revealed a fundamental relatinship incompatibility",
+            "Expressed regret about another castmember (1-3 pts)",
+            "Called their partner another castmember/romantic interest/'s name",
+            "Got caught lying",
+            "Pressured partner to do something for own self-interest",
+            "Got dumped on their wedding day",
+            "Said no on their wedding day",            
+            "Doesn't find partner attractive at reveal (or vice versa)",            
+            "Can't choose between two (or more) people",
+            "In the pods, dumped or got dumped by someone else",
+            "Got their proposal rejected or rejected a proposal",            
+        ]
+
+        # Query activities based on the input list of names and order them accordingl
+        activities = sorted(Activity.query.all(), key=lambda x: activity_order.index(x.name))
+        owners     = League.query.filter_by(id = selected_league_id).one().owners
+
+        men   = Castmember.query.filter_by(gender = 'male'  ) # Castmember.query.join(Team, (Team.man_id   == Castmember.id) & (Team.episode == episode
+        women = Castmember.query.filter_by(gender = 'female') # Castmember.query.join(Team, (Team.woman_id == Castmember.id) & (Team.episode == episode
+        bears = Castmember.query # Castmember.query.join(Team, (Team.bear_id  == Castmember.id) & (Team.episode == episode
 
         roles_dict = {
             'Men'            : men,
@@ -78,23 +133,24 @@ def score_episode(episode):
         }
         
         return render_template('score_episode.html'
-                            , owners = owners
+                            , owners     = owners
                             , episode    = episode
                             , roles_dict = roles_dict
                             , activities = activities
                             )
+                               
     elif request.method == 'POST':
 
-        # Get the list of owner IDs from the submitted form
+        # Get the list of owner IDs from the submitted for
         attended_owners_ids = request.form.getlist('owner-checkboxes')
 
-        # Update the database based on the submitted form data
+        # Update the database based on the submitted form dat
         for owner in Owner.query.all():
             if str(owner.id) in attended_owners_ids:
-                # Add the viewing for owners who attended
+                # Add the viewing for owners who attende
                 owner.viewings.append(Viewing(episode = episode))
             else:
-                # Remove the viewing for owners who did not attend
+                # Remove the viewing for owners who did not atten
                 for viewing in owner.viewings:
                     if viewing.episode == episode:
                         owner.viewings.remove(viewing)
@@ -116,7 +172,7 @@ def select_teams(episode):
     print(len(women))
     print(len(women))
     print(len(women))
-    
+
     owners      = Owner     .query.filter_by(league_id = selected_league_id).order_by(Owner.name).all()
     
     return render_template('select_teams.html'

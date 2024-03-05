@@ -28,19 +28,32 @@ def populate_activities():
         Activity(name = "Maturely handled a situation with another cast member", pts = 2,   type = "good"),
         Activity(name = "Happy cried",                                           pts = 1,   type = "good"),
         Activity(name = "Did a sweet/romantic gesture for their partner",        pts = 1,   type = "good"),
-        Activity(name = "Got called, someone's #1/only choice/interest",         pts = 1,   type = "good"),
-        Activity(name = "Said they're 'falling for' partner (or vice versa)",    pts = 2,   type = "good"),
         Activity(name = "Said “I love you” to date/partner or vice versa",       pts = 3,   type = "good"),
         Activity(name = "Had sex with their partner",                            pts = 2,   type = "good"),
-        Activity(name = "Got/received a gift",                                   pts = 1,   type = "good"),
         Activity(name = "Created/performed some type of art",                    pts = 1,   type = "good"),
-        Activity(name = "Another contestant says they’re attracted to them",     pts = 0.5, type = "good"),
         Activity(name = "Got their partner’s friends/family’s blessing",         pts = 1,   type = "good"),
         Activity(name = "Post-engagement, had a romantic date",                  pts = 1,   type = "good"),
-        Activity(name = "Proposed or got proposed to",                           pts = 5,   type = "good"),
-        Activity(name = "Got engaged (i.e., the proposal was accepted)",         pts = 5,   type = "good"),        
         Activity(name = "Said “I do” on their wedding day",                      pts = 8,   type = "good"),
         Activity(name = "Partner said “I do” on their wedding day",              pts = 7,   type = "good"),
+
+        # New Activities
+        Activity(name = "Another castmember said they wish they were with them/chose them", pts = 2, type = "good"),
+        Activity(name = "Showed self-improvement or had a self-realization",                pts = 3, type = "good"),
+        Activity(name = "Apologized for something they did wrong",                          pts = 1, type = "good"),
+        Activity(name = "Defended their partner to others",                                 pts = 2, type = "good"),
+        Activity(name = "Rejected flirtations/advancements from non-partner",               pts = 1, type = "good"),
+        Activity(name = "Consoled or supported another castmember ",                        pts = 1, type = "good"),
+
+        # Pods only
+        Activity(name = "Got called, someone's #1/only choice/interest",         pts = 1,   type = "good"),
+        Activity(name = "Proposed or got proposed to",                           pts = 5,   type = "good"),
+        Activity(name = "Got engaged (i.e., the proposal was accepted)",         pts = 5,   type = "good"),        
+        Activity(name = "Said they're 'falling for' partner (or vice versa)",    pts = 2,   type = "good"),
+
+        # Fix typo
+        Activity(name = "Got/received a gift",                                   pts = 1,   type = "good"),
+        # Change to they find them attractive
+        Activity(name = "Another contestant says they’re attracted to them",     pts = 0.5, type = "good"),
 
         Activity(name = "Miscellaneous scandalous thing",                                    pts = 1,  type = "bad"),
         Activity(name = "Sad/angry cried",                                                   pts = 1,  type = "bad"),

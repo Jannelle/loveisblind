@@ -188,8 +188,8 @@
                 <option value="" selected disabled>Select an Episode</option>
                 {% for episode_number in range(1, 13) %}
                     {% if episode_number == 5 %}
-                        <option value="{{ episode_number }}">Episode {{ episode_number }} - Pre-engagement</option>
-                        <option value="{{ episode_number }}-post-engagement">Episode {{ episode_number }} - Post-engagement</option>
+                        <option value="{{ episode_number }} - pre-engagements">Episode {{ episode_number }} - pre-engagements</option>
+                        <option value="{{ episode_number }} - post-engagements">Episode {{ episode_number }} - post-engagements</option>
                     {% else %}
                         <option value="{{ episode_number }}">Episode {{ episode_number }}</option>
                     {% endif %}
