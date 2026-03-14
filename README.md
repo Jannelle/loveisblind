@@ -46,9 +46,9 @@ Users can view:
 
 The system tracks scoring contributions from each cast member.
 
-![Castmember Table](screenshots/castmembers.png)
+![Castmember Table](screenshots/castmember_scores.png)
 
-This allows users to see which contestants generate the most fantasy points across the season.
+This allows users to see which cast member generates the most fantasy points across the season. This was most relevant when we decided to do a re-draft after episode 5, which acted as a "catch-up" mechanic so that players whose teams had exited the show could still compete.
 
 ---
 
